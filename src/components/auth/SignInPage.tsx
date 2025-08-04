@@ -80,8 +80,7 @@ export function SignInPage() {
             </Button>
             
             <div className="text-center text-sm text-muted-foreground">
-              <p>Demo Mode: Click to switch between admin/viewer roles</p>
-              <p className="mt-1 text-xs">In production, this will use Google OAuth</p>
+              <p>Sign in with your Google account to access your personalized dashboard</p>
             </div>
           </CardContent>
         </Card>
