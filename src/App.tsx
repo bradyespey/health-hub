@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LayoutProvider } from "@/contexts/LayoutContext";
 import { SignInPage } from "@/components/auth/SignInPage";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
@@ -24,12 +25,14 @@ function AuthenticatedApp() {
   }
   
   return (
-    <DashboardLayout>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </DashboardLayout>
+    <LayoutProvider>
+      <DashboardLayout>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </DashboardLayout>
+    </LayoutProvider>
   );
 }
 

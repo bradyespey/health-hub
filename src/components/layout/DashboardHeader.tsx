@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, RefreshCw, Sun, Moon, Monitor } from 'lucide-react';
+import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/components/ThemeProvider';
 import { UserRole } from '@/contexts/AuthContext';
+import { useLayout } from '@/contexts/LayoutContext';
 
 interface DashboardHeaderProps {
   onRefresh: () => void;
@@ -30,6 +31,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
     to: new Date(),
   });
   const { theme, setTheme } = useTheme();
+  const { isEditMode, setEditMode } = useLayout();
 
   const formatLastRefresh = (date: Date) => {
     const now = new Date();
@@ -86,6 +88,27 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
+
+          {userRole === 'admin' && (
+            <Button
+              variant={isEditMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEditMode(!isEditMode)}
+              className="gap-2"
+            >
+              {isEditMode ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Done
+                </>
+              ) : (
+                <>
+                  <Edit3 className="h-4 w-4" />
+                  Edit Layout
+                </>
+              )}
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

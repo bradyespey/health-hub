@@ -43,6 +43,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleUserSignIn = async (firebaseUser: FirebaseUser) => {
     try {
+      // Check if user email is in approved list
+      const approvedEmails = [
+        'baespey@gmail.com',
+        'bradyjennytx@gmail.com', 
+        'jennycespey@gmail.com'
+      ];
+
+      const userEmail = firebaseUser.email || '';
+      
+      if (!approvedEmails.includes(userEmail)) {
+        // User not approved, sign them out
+        console.log('Unauthorized email attempted sign in:', userEmail);
+        await firebaseSignOut(auth);
+        alert('Access denied. This app is restricted to authorized users only.');
+        setLoading(false);
+        return;
+      }
+
       const userDocRef = doc(db, 'users', firebaseUser.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -53,19 +71,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const existingData = userDoc.data();
         userData = {
           id: firebaseUser.uid,
-          email: firebaseUser.email || '',
+          email: userEmail,
           name: firebaseUser.displayName || '',
           role: existingData.role || 'viewer',
           avatar: firebaseUser.photoURL || undefined
         };
+
+        // Update last login
+        await setDoc(userDocRef, {
+          ...existingData,
+          lastLoginAt: new Date()
+        }, { merge: true });
       } else {
-        // New user, create user document
-        // Default role is 'viewer', can be manually changed to 'admin' in Firestore
+        // New approved user, create user document
+        // Set role based on email
+        const role = userEmail === 'baespey@gmail.com' ? 'admin' : 'viewer';
+        
         userData = {
           id: firebaseUser.uid,
-          email: firebaseUser.email || '',
+          email: userEmail,
           name: firebaseUser.displayName || '',
-          role: 'viewer',
+          role: role,
           avatar: firebaseUser.photoURL || undefined
         };
 
