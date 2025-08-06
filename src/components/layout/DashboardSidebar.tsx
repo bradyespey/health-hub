@@ -58,7 +58,11 @@ export function DashboardSidebar() {
       <SidebarContent>
         {!collapsed && (
           <div className="p-4 border-b">
-            <h2 className="text-lg font-semibold text-accent">Espey Performance Hub</h2>
+            <NavLink to="/" className="block">
+              <h2 className="text-xl font-bold text-accent hover:text-accent/80 transition-colors">
+                Espey Performance Hub
+              </h2>
+            </NavLink>
           </div>
         )}
         
