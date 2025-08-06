@@ -4,7 +4,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { SidebarProvider as CustomSidebarProvider } from '@/contexts/SidebarContext';
 import { DashboardSidebar } from './DashboardSidebar';
 import { DashboardHeader } from './DashboardHeader';
-import { MobileNav } from './MobileNav';
+
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardLayoutProps {
@@ -47,8 +47,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </main>
           </div>
           
-          {/* Mobile Bottom Navigation */}
-          <MobileNav />
+
         </div>
       </SidebarProvider>
     </CustomSidebarProvider>

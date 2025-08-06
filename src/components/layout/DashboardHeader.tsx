@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -35,6 +36,25 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
   const { theme, setTheme } = useTheme();
   const { isEditMode, setEditMode } = useLayout();
   const { setSidebarState } = useSidebarState();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const navigationItems = [
+    { title: 'Dashboard', url: '/', icon: LayoutGrid },
+    { title: 'Readiness', url: '/readiness', icon: Activity },
+    { title: 'Nutrition', url: '/nutrition', icon: Apple },
+    { title: 'Hydration', url: '/hydration', icon: Droplets },
+    { title: 'Training', url: '/training', icon: Dumbbell },
+    { title: 'Habits', url: '/habits', icon: CheckSquare },
+    { title: 'Milestones', url: '/milestones', icon: Trophy },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   const formatLastRefresh = (date: Date) => {
     const now = new Date();
@@ -48,8 +68,19 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
   };
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center gap-2 md:gap-4 px-3 md:px-6">
+    <>
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center gap-2 md:gap-4 px-3 md:px-6">
+          {/* Mobile Menu Button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="md:hidden h-7 w-7"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <Menu className="h-4 w-4" />
+            <span className="sr-only">Open Menu</span>
+          </Button>
 
         
         {/* Date Range Picker - Hidden on small screens */}
@@ -170,5 +201,63 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
         </div>
       </div>
     </header>
+
+    {/* Mobile Menu Overlay */}
+    {mobileMenuOpen && (
+      <div className="md:hidden fixed inset-0 z-50">
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/50" 
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        
+        {/* Sidebar */}
+        <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-background border-r">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-bold text-accent">
+              Espey Performance Hub
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(false)}
+              className="h-7 w-7"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close Menu</span>
+            </Button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="p-4">
+            <div className="space-y-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.url);
+                
+                return (
+                  <NavLink
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                      active 
+                        ? "bg-accent text-accent-foreground" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
