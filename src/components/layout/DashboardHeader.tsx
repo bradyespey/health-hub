@@ -18,7 +18,7 @@ import {
 import { useTheme } from '@/components/ThemeProvider';
 import { UserRole } from '@/contexts/AuthContext';
 import { useLayout } from '@/contexts/LayoutContext';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useSidebarState } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 
 interface DashboardHeaderProps {
@@ -34,6 +34,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
   });
   const { theme, setTheme } = useTheme();
   const { isEditMode, setEditMode } = useLayout();
+  const { setSidebarState } = useSidebarState();
 
   const formatLastRefresh = (date: Date) => {
     const now = new Date();
@@ -50,7 +51,15 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center gap-2 md:gap-4 px-3 md:px-6">
         {/* Mobile Menu Button */}
-        <SidebarTrigger className="md:hidden" />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="md:hidden h-7 w-7"
+          onClick={() => setSidebarState('expanded')}
+        >
+          <Menu className="h-4 w-4" />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
         
         {/* Date Range Picker - Hidden on small screens */}
         <div className="hidden sm:flex items-center gap-2">

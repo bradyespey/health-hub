@@ -143,22 +143,22 @@ export function DashboardSidebar() {
         {/* Settings & Sidebar Controls */}
         <div className="p-2 border-t flex-shrink-0">
           {shouldShowExpanded ? (
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-3 h-10 pointer-events-auto">
+                <Button variant="ghost" className="w-full justify-start gap-3 h-10 text-muted-foreground hover:text-foreground hover:bg-muted">
                   <Settings className="h-4 w-4" />
                   <span>Sidebar</span>
                   <ChevronRight className="h-4 w-4 ml-auto" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="end" className="z-50">
+              <DropdownMenuContent side="right" align="end" className="z-50" onInteractOutside={(e) => e.preventDefault()}>
                 {sidebarStates.map((state) => (
                   <DropdownMenuItem
                     key={state.value}
                     onClick={() => setSidebarState(state.value)}
                     className={cn(
-                      "cursor-pointer",
-                      sidebarState === state.value && "bg-accent text-accent-foreground"
+                      "cursor-pointer focus:bg-muted focus:text-foreground",
+                      sidebarState === state.value ? "bg-accent text-accent-foreground" : "bg-background text-foreground"
                     )}
                   >
                     {state.label}
@@ -167,34 +167,34 @@ export function DashboardSidebar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenu>
+            <DropdownMenu modal={false}>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="w-10 h-10 p-0 mx-auto pointer-events-auto">
+                    <Button variant="ghost" size="sm" className="w-10 h-10 p-0 mx-auto text-muted-foreground hover:text-foreground hover:bg-muted">
                       <Settings className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="end" className="z-50">
-                    {sidebarStates.map((state) => (
-                      <DropdownMenuItem
-                        key={state.value}
-                        onClick={() => setSidebarState(state.value)}
-                        className={cn(
-                          "cursor-pointer",
-                          sidebarState === state.value && "bg-accent text-accent-foreground"
-                        )}
-                      >
-                        {state.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Sidebar Settings</p>
-              </TooltipContent>
-            </Tooltip>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Sidebar Settings</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent side="right" align="end" className="z-50" onInteractOutside={(e) => e.preventDefault()}>
+                {sidebarStates.map((state) => (
+                  <DropdownMenuItem
+                    key={state.value}
+                    onClick={() => setSidebarState(state.value)}
+                    className={cn(
+                      "cursor-pointer focus:bg-muted focus:text-foreground",
+                      sidebarState === state.value ? "bg-accent text-accent-foreground" : "bg-background text-foreground"
+                    )}
+                  >
+                    {state.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
