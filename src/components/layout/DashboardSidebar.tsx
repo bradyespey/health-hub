@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   Activity, 
@@ -7,27 +8,22 @@ import {
   CheckSquare, 
   Trophy,
   User,
-  LogOut
+  LogOut,
+  ChevronRight,
+  Settings,
+  LayoutGrid
 } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  SidebarFooter,
-  useSidebar,
-} from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSidebarState } from '@/contexts/SidebarContext';
 
 const navigationItems = [
-  { title: 'Readiness', url: '/', icon: Activity },
+  { title: 'Dashboard', url: '/', icon: LayoutGrid },
+  { title: 'Readiness', url: '/readiness', icon: Activity },
   { title: 'Nutrition', url: '/nutrition', icon: Apple },
   { title: 'Hydration', url: '/hydration', icon: Droplets },
   { title: 'Training', url: '/training', icon: Dumbbell },
@@ -35,11 +31,19 @@ const navigationItems = [
   { title: 'Milestones', url: '/milestones', icon: Trophy },
 ];
 
+const sidebarStates = [
+  { value: 'expanded', label: 'Always Expanded' },
+  { value: 'collapsed', label: 'Always Collapsed' },
+  { value: 'hover', label: 'Expand on Hover' },
+] as const;
+
 export function DashboardSidebar() {
-  const { state } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const collapsed = state === 'collapsed';
+  const { sidebarState, setSidebarState, isExpanded } = useSidebarState();
+  const [isHovered, setIsHovered] = useState(false);
+
+  const shouldShowExpanded = isExpanded || (sidebarState === 'hover' && isHovered);
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -49,78 +53,213 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar
-      className={collapsed ? 'w-14' : 'w-64'}
-      collapsible="icon"
-    >
-      <SidebarTrigger className="m-2 self-end" />
-      
-      <SidebarContent>
-        {!collapsed && (
-          <div className="p-4 border-b">
+    <TooltipProvider>
+      <aside 
+        className={cn(
+          "hidden md:flex flex-col bg-card border-r transition-all duration-300 ease-in-out relative group h-screen sticky top-0",
+          shouldShowExpanded ? "w-64" : "w-16"
+        )}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Header */}
+        <div className="p-4 border-b">
+          {shouldShowExpanded ? (
             <NavLink to="/" className="block">
-              <h2 className="text-xl font-bold text-accent hover:text-accent/80 transition-colors">
+              <h2 className="text-lg font-bold text-accent hover:text-accent/80 transition-colors">
                 Espey Performance Hub
               </h2>
             </NavLink>
-          </div>
-        )}
-        
-        <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>Dashboard</SidebarGroupLabel>}
-          
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        isActive
-                          ? 'bg-accent text-accent-foreground font-medium'
-                          : 'hover:bg-muted/50'
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink to="/" className="flex items-center justify-center">
+                  <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-accent-foreground" />
+                  </div>
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Espey Performance Hub</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
-      <SidebarFooter className="p-4 border-t">
-        {user && (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-            
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+        {/* Navigation */}
+        <nav className="flex-1 p-2 overflow-y-auto">
+          <div className="space-y-1">
+            {shouldShowExpanded && (
+              <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Navigation
               </div>
             )}
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={signOut}
-              className="h-8 w-8 p-0"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.url);
+              
+              if (!shouldShowExpanded) {
+                return (
+                  <Tooltip key={item.title}>
+                    <TooltipTrigger asChild>
+                      <NavLink
+                        to={item.url}
+                        className={cn(
+                          "flex items-center justify-center h-10 w-10 rounded-lg transition-colors mx-auto",
+                          active 
+                            ? "bg-accent text-accent-foreground" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>{item.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return (
+                <NavLink
+                  key={item.title}
+                  to={item.url}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                    active 
+                      ? "bg-accent text-accent-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.title}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Settings & Sidebar Controls */}
+        <div className="p-2 border-t flex-shrink-0">
+          {shouldShowExpanded ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start gap-3 h-10 pointer-events-auto">
+                  <Settings className="h-4 w-4" />
+                  <span>Sidebar</span>
+                  <ChevronRight className="h-4 w-4 ml-auto" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="end" className="z-50">
+                {sidebarStates.map((state) => (
+                  <DropdownMenuItem
+                    key={state.value}
+                    onClick={() => setSidebarState(state.value)}
+                    className={cn(
+                      "cursor-pointer",
+                      sidebarState === state.value && "bg-accent text-accent-foreground"
+                    )}
+                  >
+                    {state.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-10 h-10 p-0 mx-auto pointer-events-auto">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" align="end" className="z-50">
+                    {sidebarStates.map((state) => (
+                      <DropdownMenuItem
+                        key={state.value}
+                        onClick={() => setSidebarState(state.value)}
+                        className={cn(
+                          "cursor-pointer",
+                          sidebarState === state.value && "bg-accent text-accent-foreground"
+                        )}
+                      >
+                        {state.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Sidebar Settings</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
+        {/* User Section */}
+        {user && (
+          <div className="p-2 border-t flex-shrink-0">
+            {shouldShowExpanded ? (
+              <div className="flex items-center gap-3 px-3 py-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.avatar} />
+                  <AvatarFallback>
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={signOut}
+                  className="h-8 w-8 p-0"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar} />
+                      <AvatarFallback>
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-xs opacity-70 capitalize">{user.role}</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={signOut}
+                      className="h-8 w-8 p-0"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>Sign Out</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </div>
         )}
-      </SidebarFooter>
-    </Sidebar>
+      </aside>
+    </TooltipProvider>
   );
 }

@@ -75,7 +75,7 @@ export function ReadinessPanel() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Today's metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${getReadinessColor(latest.readiness)}`}>
                 {latest.readiness}

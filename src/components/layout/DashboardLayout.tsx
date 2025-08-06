@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider as CustomSidebarProvider } from '@/contexts/SidebarContext';
 import { DashboardSidebar } from './DashboardSidebar';
 import { DashboardHeader } from './DashboardHeader';
+import { MobileNav } from './MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardLayoutProps {
@@ -20,29 +22,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar />
-        
-        <div className="flex-1 flex flex-col">
-          <DashboardHeader 
-            onRefresh={handleRefresh}
-            lastRefresh={lastRefresh}
-            userRole={user?.role}
-          />
+    <CustomSidebarProvider defaultState="collapsed" storageKey="espey-sidebar-state">
+      <SidebarProvider defaultOpen={false}>
+        <div className="min-h-screen flex w-full bg-background">
+          <DashboardSidebar />
           
-          <main className="flex-1 p-6">
-            <motion.div
-              key={lastRefresh.getTime()}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {children}
-            </motion.div>
-          </main>
+          <div className="flex-1 flex flex-col min-w-0">
+            <DashboardHeader 
+              onRefresh={handleRefresh}
+              lastRefresh={lastRefresh}
+              userRole={user?.role}
+            />
+            
+            <main className="flex-1 p-3 md:p-6 overflow-x-hidden pb-20 md:pb-6">
+              <motion.div
+                key={lastRefresh.getTime()}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="w-full"
+              >
+                {children}
+              </motion.div>
+            </main>
+          </div>
+          
+          {/* Mobile Bottom Navigation */}
+          <MobileNav />
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </CustomSidebarProvider>
   );
 }

@@ -6,16 +6,29 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useHabits } from '@/hooks/useData';
 import { HabitifyService } from '@/services/habitifyService';
+import { useToast } from '@/hooks/use-toast';
 
 export function HabitsPanel() {
   const { data: habits, isLoading, mutate } = useHabits();
   const [loading, setLoading] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleToggleHabit = async (habitId: string) => {
     setLoading(habitId);
     try {
       await HabitifyService.logHabit(habitId);
       mutate(); // Refresh data
+      toast({
+        title: "Habit logged",
+        description: "Successfully logged your habit completion!",
+      });
+    } catch (error) {
+      console.error('Failed to log habit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to log habit. Using local fallback.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(null);
     }

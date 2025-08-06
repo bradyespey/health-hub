@@ -10,6 +10,12 @@ import { SignInPage } from "@/components/auth/SignInPage";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { ReadinessPanel } from "@/components/dashboard/ReadinessPanel";
+import { NutritionPanel } from "@/components/dashboard/NutritionPanel";
+import { HydrationPanel } from "@/components/dashboard/HydrationPanel";
+import { TrainingPanel } from "@/components/dashboard/TrainingPanel";
+import { HabitsPanel } from "@/components/dashboard/HabitsPanel";
+import { MilestonesPanel } from "@/components/dashboard/MilestonesPanel";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +35,12 @@ function AuthenticatedApp() {
       <DashboardLayout>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/readiness" element={<div className="p-6"><ReadinessPanel /></div>} />
+          <Route path="/nutrition" element={<div className="p-6"><NutritionPanel /></div>} />
+          <Route path="/hydration" element={<div className="p-6"><HydrationPanel /></div>} />
+          <Route path="/training" element={<div className="p-6"><TrainingPanel /></div>} />
+          <Route path="/habits" element={<div className="p-6"><HabitsPanel /></div>} />
+          <Route path="/milestones" element={<div className="p-6"><MilestonesPanel /></div>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </DashboardLayout>

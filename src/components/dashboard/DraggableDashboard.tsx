@@ -115,7 +115,7 @@ export function DraggableDashboard() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-64 bg-muted/20 animate-pulse rounded-lg" />
         ))}
@@ -132,7 +132,7 @@ export function DraggableDashboard() {
       onDragEnd={handleDragEnd}
     >
       <div className={cn(
-        "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 group",
+        "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 group",
         isEditMode && "outline-2 outline-dashed outline-primary/20 p-4 rounded-lg"
       )}>
         <SortableContext 

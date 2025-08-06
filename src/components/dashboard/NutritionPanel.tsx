@@ -99,7 +99,7 @@ export function NutritionPanel() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Macro Breakdown */}
             <div>
               <h4 className="text-sm font-medium mb-3">Today's Macros</h4>
