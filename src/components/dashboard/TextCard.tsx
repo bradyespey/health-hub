@@ -1,54 +1,59 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Edit, Save, X } from 'lucide-react';
+import { FileText, Edit, Save, X, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useAuth } from '@/contexts/AuthContext';
 
-const initialChallengeGoal = `<h2><strong>30-Day Mile + Bodyweight Challenge</strong></h2>
+interface TextCardProps {
+  id: string;
+  title?: string;
+  description?: string;
+  initialContent?: string;
+  onDelete?: (id: string) => void;
+  icon?: React.ComponentType<{ className?: string }>;
+  size?: 'small' | 'medium' | 'large';
+}
 
-<p><span style="color: #f59e0b;">🎯</span> <strong>Goal:</strong> Maintain CrossFit 5–6x/week while adding a <strong>daily 1-mile run</strong> + <strong>50 push-ups</strong> + core work for 30 days.</p>
-
-<h3><span style="color: #3b82f6;">📌</span> <strong>Rules & Tracking</strong></h3>
-<ul>
-<li><strong>Run:</strong> 1 mile (easy/moderate pace most days, 1–2 faster efforts/week)</li>
-<li><strong>Bodyweight:</strong> 50 push-ups + core variation of the day</li>
-<li><strong>Apple Watch:</strong> <em>Outdoor Run</em> → mile tracking, <em>Functional Strength Training</em> → push-ups + core</li>
-<li><strong>Nutrition:</strong> ≤1,700 calories/day net (add back calories for workouts >250 kcal)</li>
-</ul>
-
-<h3><span style="color: #10b981;">💡</span> <strong>Tips for Success</strong></h3>
-<ul>
-<li>Keep 80–90% of runs at conversational pace</li>
-<li>Break push-ups into sets (e.g., 20-15-15) to keep form strong</li>
-<li>Rotate core work to avoid hip flexor fatigue</li>
-<li>On heavy CrossFit days, keep the mile easy and core work low-intensity</li>
-</ul>`;
-
-export function ChallengeCard() {
+export function TextCard({ 
+  id, 
+  title = 'Text Card', 
+  description = 'Custom text content',
+  initialContent = '<p>Start typing your content here...</p>',
+  onDelete,
+  icon: Icon = FileText,
+  size = 'medium'
+}: TextCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [challengeContent, setChallengeContent] = useState(initialChallengeGoal);
-  const [tempContent, setTempContent] = useState(challengeContent);
+  const [content, setContent] = useState(initialContent);
+  const [tempContent, setTempContent] = useState(content);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { user } = useAuth();
 
   const handleEdit = () => {
-    setTempContent(challengeContent);
+    setTempContent(content);
     setIsEditing(true);
   };
 
   const handleSave = () => {
-    setChallengeContent(tempContent);
+    setContent(tempContent);
     setLastUpdated(new Date());
     setIsEditing(false);
     // TODO: Save to Firestore
+    console.log(`Saving text card ${id}:`, tempContent);
   };
 
   const handleCancel = () => {
-    setTempContent(challengeContent);
+    setTempContent(content);
     setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (onDelete && window.confirm('Are you sure you want to delete this card?')) {
+      onDelete(id);
+    }
   };
 
   return (
@@ -56,8 +61,8 @@ export function ChallengeCard() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5 text-accent" />
-            <CardTitle>30-Day Challenge</CardTitle>
+            <Icon className="h-5 w-5 text-accent" />
+            <CardTitle>{title}</CardTitle>
           </div>
           {lastUpdated && (
             <Badge variant="outline" className="text-xs">
@@ -65,7 +70,7 @@ export function ChallengeCard() {
             </Badge>
           )}
         </div>
-        <CardDescription>Current fitness challenge progress</CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className={isEditing ? "pb-16 max-h-96 overflow-y-auto" : "max-h-96 overflow-y-auto"}>
         {isEditing ? (
@@ -77,8 +82,9 @@ export function ChallengeCard() {
             <RichTextEditor
               content={tempContent}
               onChange={setTempContent}
-              placeholder="Enter your challenge details..."
+              placeholder="Enter your content..."
               minHeight="150px"
+              compact={size === 'small'}
             />
           </motion.div>
         ) : (
@@ -87,14 +93,14 @@ export function ChallengeCard() {
             animate={{ opacity: 1 }}
             className="rich-text-content text-sm max-w-none"
             style={{ lineHeight: '1.6' }}
-            dangerouslySetInnerHTML={{ __html: challengeContent }}
+            dangerouslySetInnerHTML={{ __html: content }}
           />
         )}
       </CardContent>
       
       {/* Edit buttons positioned in top right of card header area */}
       {user?.role === 'admin' && !isEditing && (
-        <div className="absolute top-16 right-2 z-50">
+        <div className="absolute top-16 right-2 flex gap-1 z-50">
           <Button
             variant="ghost"
             size="sm"
@@ -103,6 +109,16 @@ export function ChallengeCard() {
           >
             <Edit className="h-3 w-3" />
           </Button>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              className="h-7 w-7 p-0 bg-background/80 backdrop-blur-sm border shadow-sm text-red-500 hover:text-red-700"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       )}
       

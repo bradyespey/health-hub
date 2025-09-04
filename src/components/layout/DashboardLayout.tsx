@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { SidebarProvider as CustomSidebarProvider } from '@/contexts/SidebarContext';
 import { DashboardSidebar } from './DashboardSidebar';
 import { DashboardHeader } from './DashboardHeader';
+import { PageInfo } from '@/components/ui/page-info';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { getPageInfo } from '@/utils/pageInfo';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,6 +16,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user } = useAuth();
+  const location = useLocation();
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   const handleRefresh = () => {
@@ -20,6 +24,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     // Trigger data refresh for all SWR hooks
     window.location.reload();
   };
+
+  const pageInfo = getPageInfo(location.pathname);
 
   return (
     <CustomSidebarProvider defaultState="collapsed" storageKey="espey-sidebar-state">
@@ -47,6 +53,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </main>
           </div>
           
+          {/* Page Info Button */}
+          {pageInfo && (
+            <PageInfo 
+              title={pageInfo.title}
+              description={pageInfo.description}
+              tips={pageInfo.tips}
+            />
+          )}
 
         </div>
       </SidebarProvider>

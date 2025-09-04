@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid, Ban } from 'lucide-react';
+import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid, Ban, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -21,6 +21,7 @@ import { UserRole } from '@/contexts/AuthContext';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useSidebarState } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 
 interface DashboardHeaderProps {
   onRefresh: () => void;
@@ -34,10 +35,20 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
     to: new Date(),
   });
   const { theme, setTheme } = useTheme();
-  const { isEditMode, setEditMode, cancelEdit } = useLayout();
+  const { isEditMode, setEditMode, cancelEdit, addCard } = useLayout();
   const { setSidebarState } = useSidebarState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  const handleAddCard = () => {
+    // Get current page context for better card naming
+    const pageName = location.pathname === '/' ? 'Dashboard' : 
+      location.pathname.split('/')[1]?.charAt(0).toUpperCase() + 
+      location.pathname.split('/')[1]?.slice(1) || 'Custom';
+    
+    addCard('text', `${pageName} Text Card`, 'Additional content for this section');
+  };
+
 
   const navigationItems = [
     { title: 'Dashboard', url: '/', icon: LayoutGrid },
@@ -69,7 +80,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
 
   return (
     <>
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center gap-2 md:gap-4 px-3 md:px-6">
           {/* Mobile Menu Button */}
           <Button 
@@ -136,6 +147,20 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
           {/* Edit Layout Buttons - Admin only */}
           {userRole === 'admin' && (
             <>
+              {/* Add Text Card Button - Only in edit mode */}
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddCard}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Card</span>
+                </Button>
+              )}
+              
+              
               {isEditMode && (
                 <Button
                   variant="outline"
@@ -147,25 +172,33 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
                   <span className="hidden sm:inline">Cancel</span>
                 </Button>
               )}
-              <Button
-                variant={isEditMode ? "default" : "outline"}
-                size="sm"
-                onClick={() => setEditMode(!isEditMode)}
-                className="gap-2"
-              >
-                {isEditMode ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    <span className="hidden sm:inline">Done</span>
-                  </>
-                ) : (
-                  <>
-                    <Edit3 className="h-4 w-4" />
-                    <span className="hidden lg:inline">Edit Layout</span>
-                    <span className="hidden sm:inline lg:hidden">Edit</span>
-                  </>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setEditMode(!isEditMode)}
+                  className="gap-2"
+                >
+                  {isEditMode ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      <span className="hidden sm:inline">Save</span>
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="h-4 w-4" />
+                      <span className="hidden lg:inline">Edit Layout</span>
+                      <span className="hidden sm:inline lg:hidden">Edit</span>
+                    </>
+                  )}
+                </Button>
+                {!isEditMode && (
+                  <HelpTooltip 
+                    content="Click Edit Layout to customize your dashboard. You can drag cards to reorder, resize them, add new text cards, and delete cards you don't need."
+                    side="bottom"
+                  />
                 )}
-              </Button>
+              </div>
             </>
           )}
 

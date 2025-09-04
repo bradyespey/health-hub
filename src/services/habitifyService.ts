@@ -78,10 +78,7 @@ export class HabitifyService {
     }
 
     const url = `${this.BASE_URL}${endpoint}`;
-    console.log(`Making ${options.method || 'GET'} request to: ${url}`);
-    if (options.body) {
-      console.log('Request body:', options.body);
-    }
+    // Making API request to Habitify
 
     const response = await fetch(url, {
       headers: {
@@ -92,7 +89,7 @@ export class HabitifyService {
       ...options,
     });
 
-    console.log(`Response status: ${response.status} ${response.statusText}`);
+    // Response received from Habitify API
 
     if (!response.ok) {
       let errorDetails = '';
@@ -111,8 +108,7 @@ export class HabitifyService {
 
   static async getHabits(): Promise<Habit[]> {
     try {
-      console.log('Habitify API Key present:', !!this.API_KEY);
-      console.log('Attempting to fetch habits from Habitify API...');
+      // Fetching habits from Habitify API
       
       // Get the list of habits
       const habitsResponse = await this.makeRequest<HabitifyResponse<HabitifyHabit[]>>('/habits');
@@ -121,17 +117,16 @@ export class HabitifyService {
         throw new Error(habitsResponse.message || 'Failed to fetch habits');
       }
 
-      console.log(`✅ Fetched ${habitsResponse.data.length} habits from Habitify API`);
-      console.log('📝 All habit names:', habitsResponse.data.map(h => h.name));
+      // Successfully fetched habits from API
 
               // First, try to get real completion data from Journal endpoint
-        console.log('🏆 Fetching REAL completion status from Journal endpoint...');
+        // Fetching completion status from Journal endpoint
         let journalCompletions: any[] = [];
         
         try {
           // Try multiple date formats to ensure we catch the completion
           const now = new Date();
-          console.log(`🕐 Current local time: ${now.toISOString()}`);
+          // Getting current time for date formatting
           
           // Format 1: Current time with timezone
           const offsetMinutes = now.getTimezoneOffset();
@@ -148,7 +143,7 @@ export class HabitifyService {
           const seconds = now.getSeconds().toString().padStart(2, '0');
           
           const targetDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offset}`;
-          console.log(`📅 Trying Journal with date: ${targetDate}`);
+          // Attempting Journal query with formatted date
           
           const journalResponse = await this.makeRequest<HabitifyResponse<any[]>>(`/journal?target_date=${targetDate}`);
           

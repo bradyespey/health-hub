@@ -26,9 +26,10 @@ import { HydrationPanel } from './HydrationPanel';
 import { TrainingPanel } from './TrainingPanel';
 import { HabitsPanel } from './HabitsPanel';
 import { GoalsPanel } from './GoalsPanel';
+import { TextCard } from './TextCard';
 import { Button } from '@/components/ui/button';
-import { Square, SquareCheck, SquareCheckBig, Move } from 'lucide-react';
-import { defaultPanelSizes } from '@/utils/panelHelpers';
+import { Square, SquareCheck, SquareCheckBig, Move, Plus, Trash2 } from 'lucide-react';
+import { defaultPanelSizes, isCardDeletable, getCardConfig } from '@/utils/panelHelpers';
 
 interface SortableItemProps {
   id: string;
@@ -36,11 +37,13 @@ interface SortableItemProps {
   colSpan?: number;
   size: CardSize;
   disabled?: boolean;
+  onSizeChange?: (cardId: string, size: CardSize) => void;
+  isEditMode?: boolean;
 }
 
 // Use centralized size constraints
 
-function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableItemProps) {
+function SortableItem({ id, children, colSpan = 1, size, disabled, onSizeChange, isEditMode }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -50,7 +53,7 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
     isDragging,
   } = useSortable({ id, disabled });
 
-  const { updateCardSize } = useLayout();
+  const { updateCardSize, deleteCard } = useLayout();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -71,10 +74,21 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
   };
 
   const handleSizeChange = (newSize: CardSize) => {
-    updateCardSize(id, newSize);
+    if (onSizeChange) {
+      onSizeChange(id, newSize);
+    } else {
+      updateCardSize(id, newSize);
+    }
   };
 
-  const allowedSizes = defaultPanelSizes[id] || ['small', 'medium', 'large'];
+  const handleDelete = () => {
+    if (isCardDeletable(id) && window.confirm('Are you sure you want to delete this card?')) {
+      deleteCard(id);
+    }
+  };
+
+  const cardConfig = getCardConfig(id);
+  const allowedSizes = cardConfig.allowedSizes;
 
   return (
     <div
@@ -149,6 +163,24 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
                   </Button>
                 )}
               </div>
+              {cardConfig.deletable && (
+                <>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-lg relative z-30 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleDelete();
+                    }}
+                    title="Delete Card"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </>
+              )}
               <div className="w-px h-4 bg-border mx-1" />
               <div 
                 className="text-xs text-muted-foreground flex items-center gap-1 cursor-grab active:cursor-grabbing"
@@ -204,6 +236,7 @@ export function DashboardGrid() {
     }
   };
 
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
@@ -233,6 +266,28 @@ export function DashboardGrid() {
           {sortedLayouts.map((layout) => {
             const PanelComponent = panelComponents[layout.id as keyof typeof panelComponents];
             
+            // Check if it's a text card
+            if (layout.id.startsWith('text-card-')) {
+              return (
+                <SortableItem
+                  key={layout.id}
+                  id={layout.id}
+                  colSpan={layout.colSpan}
+                  size={layout.size}
+                  disabled={!isEditMode}
+                  isEditMode={isEditMode}
+                >
+                  <TextCard 
+                    id={layout.id}
+                    title="Custom Text Card"
+                    description="Your custom content"
+                    size={layout.size}
+                  />
+                </SortableItem>
+              );
+            }
+            
+            // Handle standard panel components
             if (!PanelComponent) {
               console.warn(`Panel component not found for id: ${layout.id}`);
               return null;
@@ -245,6 +300,7 @@ export function DashboardGrid() {
                 colSpan={layout.colSpan}
                 size={layout.size}
                 disabled={!isEditMode}
+                isEditMode={isEditMode}
               >
                 <PanelComponent />
               </SortableItem>
@@ -264,6 +320,11 @@ export function DashboardGrid() {
             <div className="flex items-center gap-2">
               <Square className="h-4 w-4" />
               <span>Hover to resize</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4" />
+              <span>Delete text cards</span>
             </div>
           </div>
         </div>

@@ -19,6 +19,9 @@ interface LayoutContextType {
   setEditMode: (enabled: boolean) => void;
   updateLayout: (layouts: CardLayout[]) => void;
   updateCardSize: (cardId: string, size: CardSize) => void;
+  addCard: (cardType: 'text', title?: string, description?: string) => string;
+  deleteCard: (cardId: string) => void;
+  deleteAllTextCards: () => void;
   cancelEdit: () => void;
   loading: boolean;
 }
@@ -113,7 +116,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     const newLayouts = layouts.map(layout => 
       layout.id === cardId ? { ...layout, size } : layout
     );
-    setLayouts(newLayouts); // Update immediately for UI feedback, but don't save yet
+    setLayouts(newLayouts);
+    await saveLayoutToFirestore(newLayouts);
   };
 
   const setEditMode = (enabled: boolean) => {
@@ -125,6 +129,55 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       saveLayoutToFirestore(layouts);
     }
     setIsEditMode(enabled);
+  };
+
+  const addCard = (cardType: 'text', title?: string, description?: string): string => {
+    const newCardId = `${cardType}-card-${Date.now()}`;
+    const maxOrder = Math.max(...layouts.map(l => l.order), -1);
+    
+    const newCard: CardLayout = {
+      id: newCardId,
+      order: maxOrder + 1,
+      size: 'medium'
+    };
+
+    const newLayouts = [...layouts, newCard];
+    setLayouts(newLayouts);
+    
+    // Save immediately if not in edit mode
+    if (!isEditMode) {
+      saveLayoutToFirestore(newLayouts);
+    }
+
+    return newCardId;
+  };
+
+  const deleteCard = (cardId: string) => {
+    const newLayouts = layouts.filter(layout => layout.id !== cardId);
+    // Reorder the remaining cards
+    const reorderedLayouts = newLayouts.map((layout, index) => ({
+      ...layout,
+      order: index
+    }));
+    
+    setLayouts(reorderedLayouts);
+    
+    // Save immediately if not in edit mode
+    if (!isEditMode) {
+      saveLayoutToFirestore(reorderedLayouts);
+    }
+  };
+
+  const deleteAllTextCards = () => {
+    const newLayouts = layouts.filter(layout => !layout.id.startsWith('text-card-'));
+    // Reorder the remaining cards
+    const reorderedLayouts = newLayouts.map((layout, index) => ({
+      ...layout,
+      order: index
+    }));
+    
+    setLayouts(reorderedLayouts);
+    saveLayoutToFirestore(reorderedLayouts);
   };
 
   const cancelEdit = () => {
@@ -140,6 +193,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       setEditMode,
       updateLayout,
       updateCardSize,
+      addCard,
+      deleteCard,
+      deleteAllTextCards,
       cancelEdit,
       loading
     }}>

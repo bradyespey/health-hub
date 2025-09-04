@@ -69,7 +69,7 @@ export function GoalsPanel() {
   const isAdmin = user?.role === 'admin';
 
   const handleSaveWeightLoss = () => {
-    console.log('Weight Loss Content:', weightLossContent);
+    // Weight loss content loaded
     // TODO: Save to Firestore
     setEditingWeightLoss(false);
   };

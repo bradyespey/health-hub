@@ -29,6 +29,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   minHeight?: string;
+  compact?: boolean;
 }
 
 export function RichTextEditor({ 
@@ -36,7 +37,8 @@ export function RichTextEditor({
   onChange, 
   placeholder = "Start typing...",
   className,
-  minHeight = "200px"
+  minHeight = "200px",
+  compact = false
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -84,7 +86,7 @@ export function RichTextEditor({
       size="sm"
       onClick={onClick}
       title={title}
-      className="h-8 w-8 p-0"
+      className={compact ? "h-6 w-6 p-0" : "h-8 w-8 p-0"}
     >
       {children}
     </Button>
@@ -93,9 +95,40 @@ export function RichTextEditor({
   return (
     <div className={cn("border rounded-lg overflow-hidden", className)}>
       {/* Toolbar */}
-      <div className="border-b bg-muted/50 p-2 flex flex-wrap gap-1">
-        {/* Text Formatting */}
-        <div className="flex gap-1 border-r pr-2 mr-2">
+      <div className={cn(
+        "border-b bg-muted/50 flex gap-1",
+        compact ? "p-1" : "p-2 flex-wrap"
+      )}>
+        {compact ? (
+          /* Compact toolbar - only essential tools */
+          <>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              isActive={editor.isActive('bold')}
+              title="Bold"
+            >
+              <Bold className="h-3 w-3" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              isActive={editor.isActive('italic')}
+              title="Italic"
+            >
+              <Italic className="h-3 w-3" />
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              isActive={editor.isActive('underline')}
+              title="Underline"
+            >
+              <UnderlineIcon className="h-3 w-3" />
+            </ToolbarButton>
+          </>
+        ) : (
+          /* Full toolbar */
+          <>
+            {/* Text Formatting */}
+            <div className="flex gap-1 border-r pr-2 mr-2">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
@@ -232,6 +265,8 @@ export function RichTextEditor({
             <div className="w-4 h-4 rounded border border-gray-300 bg-orange-500" />
           </ToolbarButton>
         </div>
+          </>
+        )}
       </div>
 
       {/* Editor Content */}

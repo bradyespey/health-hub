@@ -26,9 +26,10 @@ import { HydrationPanel } from './HydrationPanel';
 import { TrainingPanel } from './TrainingPanel';
 import { HabitsPanel } from './HabitsPanel';
 import { GoalsPanel } from './GoalsPanel';
+import { TextCard } from './TextCard';
 import { Button } from '@/components/ui/button';
-import { Square, SquareCheck, SquareCheckBig, Move } from 'lucide-react';
-import { defaultPanelSizes } from '@/utils/panelHelpers';
+import { Square, SquareCheck, SquareCheckBig, Move, Plus, Trash2 } from 'lucide-react';
+import { defaultPanelSizes, isCardDeletable, getCardConfig } from '@/utils/panelHelpers';
 
 interface SortableItemProps {
   id: string;
@@ -48,7 +49,7 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
     isDragging,
   } = useSortable({ id, disabled });
 
-  const { updateCardSize } = useLayout();
+  const { updateCardSize, deleteCard } = useLayout();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -72,7 +73,14 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
     updateCardSize(id, newSize);
   };
 
-  const allowedSizes = defaultPanelSizes[id] || ['small', 'medium', 'large'];
+  const handleDelete = () => {
+    if (isCardDeletable(id) && window.confirm('Are you sure you want to delete this card?')) {
+      deleteCard(id);
+    }
+  };
+
+  const cardConfig = getCardConfig(id);
+  const allowedSizes = cardConfig.allowedSizes;
 
   return (
     <div
@@ -147,6 +155,24 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
                   </Button>
                 )}
               </div>
+              {cardConfig.deletable && (
+                <>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-lg relative z-30 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleDelete();
+                    }}
+                    title="Delete Card"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </>
+              )}
               <div className="w-px h-4 bg-border mx-1" />
               <div 
                 className="text-xs text-muted-foreground flex items-center gap-1 cursor-grab active:cursor-grabbing"
@@ -190,8 +216,28 @@ export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
     })
   );
 
-  // No drag handling for single panels
-  const handleDragEnd = (event: DragEndEvent) => {};
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = pageLayouts.findIndex((item) => item.id === active.id);
+      const newIndex = pageLayouts.findIndex((item) => item.id === over.id);
+      
+      const newLayouts = arrayMove(pageLayouts, oldIndex, newIndex).map((item, index) => ({
+        ...item,
+        order: index,
+      }));
+      
+      // Update the full layouts array
+      const updatedLayouts = layouts.map(layout => {
+        const newLayout = newLayouts.find(nl => nl.id === layout.id);
+        return newLayout || layout;
+      });
+      
+      updateLayout(updatedLayouts);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -203,15 +249,24 @@ export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
     );
   }
 
-  // Find the layout for this specific panel
-  const layout = layouts.find(l => l.id === panelId);
-  if (!layout) {
-    console.warn(`Layout not found for panel: ${panelId}`);
-    return null;
-  }
+  // Get all cards that should show on this page (main panel + any text cards)
+  const pageLayouts = React.useMemo(() => {
+    // Find the main panel and any text cards
+    const mainPanel = layouts.find(layout => layout.id === panelId);
+    const textCards = layouts.filter(layout => layout.id.startsWith('text-card-'));
+    
+    // Combine main panel and text cards
+    const allCards = [];
+    if (mainPanel) {
+      allCards.push(mainPanel);
+    }
+    allCards.push(...textCards);
+    
+    return allCards.sort((a, b) => a.order - b.order);
+  }, [layouts, panelId]);
 
   const PanelComponent = panelComponents[panelId as keyof typeof panelComponents];
-  if (!PanelComponent) {
+  if (!PanelComponent && !pageLayouts.find(l => l.id === panelId)) {
     console.warn(`Panel component not found for id: ${panelId}`);
     return (
       <div className="p-6">
@@ -234,18 +289,47 @@ export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
           isEditMode && "outline-2 outline-dashed outline-primary/20 p-4 rounded-lg"
         )}>
           <SortableContext 
-            items={[layout.id]} 
+            items={pageLayouts.map(item => item.id)} 
             strategy={rectSortingStrategy}
           >
-            <SortableItem
-              key={layout.id}
-              id={layout.id}
-              colSpan={layout.colSpan}
-              size={layout.size}
-              disabled={!isEditMode}
-            >
-              <PanelComponent />
-            </SortableItem>
+            {pageLayouts.map((layout) => {
+              // Check if it's a text card
+              if (layout.id.startsWith('text-card-')) {
+                return (
+                  <SortableItem
+                    key={layout.id}
+                    id={layout.id}
+                    colSpan={layout.colSpan}
+                    size={layout.size}
+                    disabled={!isEditMode}
+                  >
+                    <TextCard 
+                      id={layout.id}
+                      title={`${panelId.charAt(0).toUpperCase() + panelId.slice(1)} Text Card`}
+                      description="Additional content for this section"
+                      size={layout.size}
+                    />
+                  </SortableItem>
+                );
+              }
+              
+              // Handle the main panel component
+              if (layout.id === panelId && PanelComponent) {
+                return (
+                  <SortableItem
+                    key={layout.id}
+                    id={layout.id}
+                    colSpan={layout.colSpan}
+                    size={layout.size}
+                    disabled={!isEditMode}
+                  >
+                    <PanelComponent />
+                  </SortableItem>
+                );
+              }
+              
+              return null;
+            })}
           </SortableContext>
         </div>
         
@@ -255,6 +339,11 @@ export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
               <div className="flex items-center gap-2">
                 <Square className="h-4 w-4" />
                 <span>Hover to resize</span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <div className="flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                <span>Delete text cards</span>
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { Apple, Target, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { SampleBadge } from '@/components/ui/sample-badge';
 import { useNutritionData, useWeightData } from '@/hooks/useData';
 import { LoseItService } from '@/services/loseItService';
 
@@ -66,7 +67,8 @@ export function NutritionPanel() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <Card className="h-full">
+      <Card className="h-full relative">
+        <SampleBadge />
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">

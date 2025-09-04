@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Trophy, Edit, Save, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -30,6 +31,7 @@ export function LongTermGoalCard() {
   const [isEditing, setIsEditing] = useState(false);
   const [goalContent, setGoalContent] = useState(initialWeightLossGoal);
   const [tempContent, setTempContent] = useState(goalContent);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { user } = useAuth();
 
   const handleEdit = () => {
@@ -39,6 +41,7 @@ export function LongTermGoalCard() {
 
   const handleSave = () => {
     setGoalContent(tempContent);
+    setLastUpdated(new Date());
     setIsEditing(false);
     // TODO: Save to Firestore
   };
@@ -49,47 +52,22 @@ export function LongTermGoalCard() {
   };
 
   return (
-    <Card>
+    <Card className="relative">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-accent" />
             <CardTitle>Long-term Goal</CardTitle>
           </div>
-          {user?.role === 'admin' && !isEditing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleEdit}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          )}
-          {isEditing && (
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCancel}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleSave}
-                className="h-8 w-8 p-0"
-              >
-                <Save className="h-4 w-4" />
-              </Button>
-            </div>
+          {lastUpdated && (
+            <Badge variant="outline" className="text-xs">
+              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Badge>
           )}
         </div>
         <CardDescription>Weight loss plan with milestone rewards</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className={isEditing ? "pb-16 max-h-96 overflow-y-auto" : "max-h-96 overflow-y-auto"}>
         {isEditing ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -100,7 +78,7 @@ export function LongTermGoalCard() {
               content={tempContent}
               onChange={setTempContent}
               placeholder="Enter your long-term goal..."
-              minHeight="300px"
+              minHeight="150px"
             />
           </motion.div>
         ) : (
@@ -113,6 +91,41 @@ export function LongTermGoalCard() {
           />
         )}
       </CardContent>
+      
+      {/* Edit buttons positioned in top right of card header area */}
+      {user?.role === 'admin' && !isEditing && (
+        <div className="absolute top-16 right-2 z-50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEdit}
+            className="h-7 w-7 p-0 bg-background/80 backdrop-blur-sm border shadow-sm"
+          >
+            <Edit className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+      
+      {isEditing && (
+        <div className="absolute top-16 right-2 flex gap-1 z-50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCancel}
+            className="h-7 w-7 p-0 bg-background/80 backdrop-blur-sm border shadow-sm"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleSave}
+            className="h-7 w-7 p-0 shadow-sm"
+          >
+            <Save className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }

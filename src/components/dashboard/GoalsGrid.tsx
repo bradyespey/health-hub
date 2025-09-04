@@ -22,22 +22,19 @@ import { cn } from '@/lib/utils';
 import { useLayout, CardSize } from '@/contexts/LayoutContext';
 import { LongTermGoalCard } from './LongTermGoalCard';
 import { ChallengeCard } from './ChallengeCard';
+import { TextCard } from './TextCard';
 import { Button } from '@/components/ui/button';
-import { Square, SquareCheck, SquareCheckBig, Move, Plus } from 'lucide-react';
-import { defaultPanelSizes } from '@/utils/panelHelpers';
+import { Square, SquareCheck, SquareCheckBig, Move, Plus, Trash2 } from 'lucide-react';
+import { defaultPanelSizes, isCardDeletable, getCardConfig } from '@/utils/panelHelpers';
 
 interface SortableItemProps {
   id: string;
   children: React.ReactNode;
   size: CardSize;
   disabled?: boolean;
-  onDelete?: () => void;
-  isDeletable?: boolean;
-  onSizeChange?: (id: string, size: CardSize) => void;
-  isEditMode?: boolean;
 }
 
-function SortableItem({ id, children, size, disabled, onDelete, isDeletable, onSizeChange, isEditMode }: SortableItemProps) {
+function SortableItem({ id, children, size, disabled }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -47,6 +44,8 @@ function SortableItem({ id, children, size, disabled, onDelete, isDeletable, onS
     isDragging,
   } = useSortable({ id, disabled });
 
+  const { updateCardSize, deleteCard } = useLayout();
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -55,7 +54,7 @@ function SortableItem({ id, children, size, disabled, onDelete, isDeletable, onS
   const getSizeClasses = (size: CardSize) => {
     switch (size) {
       case 'small':
-        return 'col-span-1 h-48 max-w-sm overflow-hidden'; // Make small cards shorter and narrower with overflow hidden
+        return 'col-span-1 h-48 w-64 max-w-xs overflow-hidden'; // Small square-ish card
       case 'medium':
         return 'col-span-1 h-64 max-w-2xl overflow-hidden';
       case 'large':
@@ -66,12 +65,17 @@ function SortableItem({ id, children, size, disabled, onDelete, isDeletable, onS
   };
 
   const handleSizeChange = (newSize: CardSize) => {
-    if (onSizeChange) {
-      onSizeChange(id, newSize);
+    updateCardSize(id, newSize);
+  };
+
+  const handleDelete = () => {
+    if (isCardDeletable(id) && window.confirm('Are you sure you want to delete this card?')) {
+      deleteCard(id);
     }
   };
 
-  const allowedSizes = defaultPanelSizes[id] || ['small', 'medium', 'large'];
+  const cardConfig = getCardConfig(id);
+  const allowedSizes = cardConfig.allowedSizes;
 
   return (
     <div
@@ -83,10 +87,11 @@ function SortableItem({ id, children, size, disabled, onDelete, isDeletable, onS
         isDragging && 'opacity-50 z-50'
       )}
     >
-      {/* Drag handle overlay - only when in edit mode */}
-      {!disabled && isEditMode && (
+      {/* Drag handle overlay */}
+      {!disabled && (
         <div
           className="absolute inset-0 cursor-grab active:cursor-grabbing z-0"
+          style={{ clipPath: 'polygon(0 0, calc(100% - 200px) 0, calc(100% - 200px) 100%, 0% 100%)' }}
           {...attributes}
           {...listeners}
         />
@@ -145,6 +150,24 @@ function SortableItem({ id, children, size, disabled, onDelete, isDeletable, onS
                   </Button>
                 )}
               </div>
+              {cardConfig.deletable && (
+                <>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-lg relative z-30 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleDelete();
+                    }}
+                    title="Delete Card"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </>
+              )}
               <div className="w-px h-4 bg-border mx-1" />
               <div 
                 className="text-xs text-muted-foreground flex items-center gap-1 cursor-grab active:cursor-grabbing"
@@ -175,23 +198,41 @@ const goalsCardComponents = {
 export function GoalsGrid() {
   const { isEditMode, loading, layouts, updateCardSize, updateLayout } = useLayout();
   
-  // Get goals-specific layouts or use defaults
+  // Debug logging removed - Goals page working properly
+  
+  // Ensure goals cards exist in the layout system
+  React.useEffect(() => {
+    if (!loading && layouts.length > 0) {
+      const goalsLayouts = layouts.filter(l => l.id === 'long-term-goal' || l.id === 'challenge');
+      // If goals cards don't exist, add them to the layout
+      if (goalsLayouts.length === 0) {
+        const newLayouts = [...layouts, ...defaultGoalsCards];
+        updateLayout(newLayouts);
+      }
+    }
+  }, [loading, layouts, updateLayout]);
+  
+  // Get goals-specific layouts from the main layout system
   const goalsCards = React.useMemo(() => {
     const goalsLayouts = layouts.filter(layout => 
-      layout.id === 'long-term-goal' || layout.id === 'challenge'
+      layout.id === 'long-term-goal' || layout.id === 'challenge' || layout.id.startsWith('text-card-')
     );
     
+    // If no layouts found, use defaults
     if (goalsLayouts.length === 0) {
       return defaultGoalsCards;
     }
     
-    return goalsLayouts.map(layout => ({
-      id: layout.id,
-      component: goalsCardComponents[layout.id as keyof typeof goalsCardComponents],
-      order: layout.order,
-      size: layout.size
-    })).sort((a, b) => a.order - b.order);
+    return goalsLayouts
+      .sort((a, b) => a.order - b.order)
+      .map(layout => ({
+        id: layout.id,
+        component: goalsCardComponents[layout.id as keyof typeof goalsCardComponents],
+        order: layout.order,
+        size: layout.size
+      }));
   }, [layouts]);
+
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -207,20 +248,26 @@ export function GoalsGrid() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (active.id !== over?.id && over?.id) {
-      console.log('Drag end:', active.id, 'to', over.id);
-      // For now, just trigger a simple update to test
-      // We'll swap the order of the two cards
-      const activeCard = layouts.find(l => l.id === active.id);
-      const overCard = layouts.find(l => l.id === over.id);
+    if (over && active.id !== over.id) {
+      // Find the current goals cards in the full layouts array
+      const goalsLayouts = layouts.filter(layout => 
+        layout.id === 'long-term-goal' || layout.id === 'challenge'
+      );
       
-      if (activeCard && overCard) {
-        // Swap their orders
+      const oldIndex = goalsLayouts.findIndex((item) => item.id === active.id);
+      const newIndex = goalsLayouts.findIndex((item) => item.id === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Swap the orders of the two cards being reordered
+        const activeCard = goalsLayouts[oldIndex];
+        const overCard = goalsLayouts[newIndex];
+        
+        // Update the full layouts array with swapped orders
         const newLayouts = layouts.map(layout => {
-          if (layout.id === active.id) {
+          if (layout.id === activeCard.id) {
             return { ...layout, order: overCard.order };
           }
-          if (layout.id === over.id) {
+          if (layout.id === overCard.id) {
             return { ...layout, order: activeCard.order };
           }
           return layout;
@@ -262,14 +309,37 @@ export function GoalsGrid() {
             {goalsCards.map((card) => {
               const CardComponent = goalsCardComponents[card.id as keyof typeof goalsCardComponents];
               
+              // Check if it's a text card
+              if (card.id.startsWith('text-card-')) {
+                return (
+                  <SortableItem
+                    key={card.id}
+                    id={card.id}
+                    size={card.size}
+                    disabled={!isEditMode}
+                  >
+                    <TextCard 
+                      id={card.id}
+                      title="Goals Text Card"
+                      description="Additional goals content"
+                      size={card.size}
+                    />
+                  </SortableItem>
+                );
+              }
+              
+              // Handle standard goal components
+              if (!CardComponent) {
+                console.warn(`Card component not found for id: ${card.id}`);
+                return null;
+              }
+              
               return (
                 <SortableItem
                   key={card.id}
                   id={card.id}
                   size={card.size}
                   disabled={!isEditMode}
-                  onSizeChange={updateCardSize}
-                  isEditMode={isEditMode}
                 >
                   <CardComponent />
                 </SortableItem>
@@ -287,8 +357,8 @@ export function GoalsGrid() {
               </div>
               <div className="w-px h-4 bg-border" />
               <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                <span>Add cards (coming soon)</span>
+                <Trash2 className="h-4 w-4" />
+                <span>Delete text cards</span>
               </div>
             </div>
           </div>

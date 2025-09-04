@@ -93,8 +93,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, { merge: true });
       } else {
         // New approved user, create user document
-        // Set role based on email
-        const role = userEmail === 'baespey@gmail.com' ? 'admin' : 'viewer';
+        // Set role based on email - admins can edit, viewers can only view
+        const adminEmails = [
+          'baespey@gmail.com',
+          'jennycespey@gmail.com', 
+          'bradyjennytx@gmail.com'
+        ];
+        const role = adminEmails.includes(userEmail) ? 'admin' : 'viewer';
         
         userData = {
           id: firebaseUser.uid,
