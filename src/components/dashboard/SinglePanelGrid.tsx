@@ -28,6 +28,7 @@ import { HabitsPanel } from './HabitsPanel';
 import { GoalsPanel } from './GoalsPanel';
 import { Button } from '@/components/ui/button';
 import { Square, SquareCheck, SquareCheckBig, Move } from 'lucide-react';
+import { defaultPanelSizes } from '@/utils/panelHelpers';
 
 interface SortableItemProps {
   id: string;
@@ -36,16 +37,6 @@ interface SortableItemProps {
   size: CardSize;
   disabled?: boolean;
 }
-
-// Define which sizes each card type supports
-const cardSizeConstraints: Record<string, CardSize[]> = {
-  readiness: ['medium', 'large'],
-  nutrition: ['small', 'medium', 'large'],
-  hydration: ['small', 'medium'],
-  training: ['small', 'medium', 'large'],
-  habits: ['medium', 'large'],
-  goals: ['small', 'medium', 'large'],
-};
 
 function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableItemProps) {
   const {
@@ -81,7 +72,7 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
     updateCardSize(id, newSize);
   };
 
-  const allowedSizes = cardSizeConstraints[id] || ['small', 'medium', 'large'];
+  const allowedSizes = defaultPanelSizes[id] || ['small', 'medium', 'large'];
 
   return (
     <div
@@ -162,7 +153,7 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
                 {...listeners}
               >
                 <Move className="h-3 w-3" />
-                Drag
+                Resize
               </div>
             </div>
           </div>
@@ -178,10 +169,14 @@ const panelComponents = {
   hydration: HydrationPanel,
   training: TrainingPanel,
   habits: HabitsPanel,
-  goals: GoalsPanel,
+  milestones: GoalsPanel,
 };
 
-export function DashboardGrid() {
+interface SinglePanelGridProps {
+  panelId: string;
+}
+
+export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
   const { layouts, isEditMode, updateLayout, loading } = useLayout();
   
   const sensors = useSensors(
@@ -195,86 +190,76 @@ export function DashboardGrid() {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = layouts.findIndex((item) => item.id === active.id);
-      const newIndex = layouts.findIndex((item) => item.id === over.id);
-      
-      const newLayouts = arrayMove(layouts, oldIndex, newIndex).map((item, index) => ({
-        ...item,
-        order: index,
-      }));
-      
-      updateLayout(newLayouts);
-    }
-  };
+  // No drag handling for single panels
+  const handleDragEnd = (event: DragEndEvent) => {};
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-64 bg-muted/20 animate-pulse rounded-lg" />
-        ))}
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 group">
+          <div className="h-64 bg-muted/20 animate-pulse rounded-lg" />
+        </div>
       </div>
     );
   }
 
-  const sortedLayouts = [...layouts].sort((a, b) => a.order - b.order);
+  // Find the layout for this specific panel
+  const layout = layouts.find(l => l.id === panelId);
+  if (!layout) {
+    console.warn(`Layout not found for panel: ${panelId}`);
+    return null;
+  }
+
+  const PanelComponent = panelComponents[panelId as keyof typeof panelComponents];
+  if (!PanelComponent) {
+    console.warn(`Panel component not found for id: ${panelId}`);
+    return (
+      <div className="p-6">
+        <div className="text-center text-red-500">
+          Panel component not found for id: {panelId}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <div className={cn(
-        "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 group",
-        isEditMode && "outline-2 outline-dashed outline-primary/20 p-4 rounded-lg"
-      )}>
-        <SortableContext 
-          items={sortedLayouts.map(item => item.id)} 
-          strategy={rectSortingStrategy}
-        >
-          {sortedLayouts.map((layout) => {
-            const PanelComponent = panelComponents[layout.id as keyof typeof panelComponents];
-            
-            if (!PanelComponent) {
-              console.warn(`Panel component not found for id: ${layout.id}`);
-              return null;
-            }
-
-            return (
-              <SortableItem
-                key={layout.id}
-                id={layout.id}
-                colSpan={layout.colSpan}
-                size={layout.size}
-                disabled={!isEditMode}
-              >
-                <PanelComponent />
-              </SortableItem>
-            );
-          })}
-        </SortableContext>
-      </div>
-      
-      {isEditMode && (
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex items-center gap-2">
-              <Move className="h-4 w-4" />
-              <span>Drag to reorder</span>
-            </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-2">
-              <Square className="h-4 w-4" />
-              <span>Hover to resize</span>
+    <div className="p-6">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <div className={cn(
+          "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 group",
+          isEditMode && "outline-2 outline-dashed outline-primary/20 p-4 rounded-lg"
+        )}>
+          <SortableContext 
+            items={[layout.id]} 
+            strategy={rectSortingStrategy}
+          >
+            <SortableItem
+              key={layout.id}
+              id={layout.id}
+              colSpan={layout.colSpan}
+              size={layout.size}
+              disabled={!isEditMode}
+            >
+              <PanelComponent />
+            </SortableItem>
+          </SortableContext>
+        </div>
+        
+        {isEditMode && (
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center gap-2">
+                <Square className="h-4 w-4" />
+                <span>Hover to resize</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </DndContext>
+        )}
+      </DndContext>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react"
+import { useAuthSafe } from "@/contexts/AuthContext"
 
 type Theme = "dark" | "light" | "system"
 
@@ -26,9 +27,20 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const { user, updateUserPreferences } = useAuthSafe()
+  const [theme, setTheme] = useState<Theme>(defaultTheme)
+
+  // Load theme from user preferences or localStorage
+  useEffect(() => {
+    if (user?.preferences?.theme) {
+      setTheme(user.preferences.theme)
+    } else {
+      const storedTheme = localStorage.getItem(storageKey) as Theme
+      if (storedTheme && ["dark", "light", "system"].includes(storedTheme)) {
+        setTheme(storedTheme)
+      }
+    }
+  }, [user?.preferences?.theme, storageKey])
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -50,9 +62,22 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
+    setTheme: async (newTheme: Theme) => {
+      setTheme(newTheme)
+      
+      // Save to user preferences if user is logged in and updateUserPreferences is available
+      if (user && updateUserPreferences) {
+        try {
+          await updateUserPreferences({ theme: newTheme })
+        } catch (error) {
+          console.warn('Failed to save theme to user preferences:', error)
+          // Fallback to localStorage
+          localStorage.setItem(storageKey, newTheme)
+        }
+      } else {
+        // Fallback to localStorage for non-authenticated users or when auth context isn't available
+        localStorage.setItem(storageKey, newTheme)
+      }
     },
   }
 

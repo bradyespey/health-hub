@@ -1,7 +1,7 @@
-import { DraggableDashboard } from '@/components/dashboard/DraggableDashboard';
+import { DashboardGrid } from '@/components/dashboard/DashboardGrid';
 
 const Index = () => {
-  return <DraggableDashboard />;
+  return <DashboardGrid />;
 };
 
 export default Index;

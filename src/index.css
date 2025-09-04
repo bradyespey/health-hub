@@ -103,3 +103,44 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Rich text content spacing */
+.rich-text-content p {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content div {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content ul {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content ol {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content h1 {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content h2 {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content h3 {
+  margin-bottom: 16px !important;
+}
+
+.rich-text-content li {
+  margin-bottom: 8px !important;
+}
+
+.rich-text-content strong {
+  font-weight: bold;
+}
+
+.rich-text-content em {
+  font-style: italic;
+}

@@ -28,6 +28,7 @@ import { HabitsPanel } from './HabitsPanel';
 import { GoalsPanel } from './GoalsPanel';
 import { Button } from '@/components/ui/button';
 import { Square, SquareCheck, SquareCheckBig, Move } from 'lucide-react';
+import { defaultPanelSizes } from '@/utils/panelHelpers';
 
 interface SortableItemProps {
   id: string;
@@ -37,15 +38,7 @@ interface SortableItemProps {
   disabled?: boolean;
 }
 
-// Define which sizes each card type supports
-const cardSizeConstraints: Record<string, CardSize[]> = {
-  readiness: ['medium', 'large'],
-  nutrition: ['small', 'medium', 'large'],
-  hydration: ['small', 'medium'],
-  training: ['small', 'medium', 'large'],
-  habits: ['medium', 'large'],
-  goals: ['small', 'medium', 'large'],
-};
+// Use centralized size constraints
 
 function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableItemProps) {
   const {
@@ -81,7 +74,7 @@ function SortableItem({ id, children, colSpan = 1, size, disabled }: SortableIte
     updateCardSize(id, newSize);
   };
 
-  const allowedSizes = cardSizeConstraints[id] || ['small', 'medium', 'large'];
+  const allowedSizes = defaultPanelSizes[id] || ['small', 'medium', 'large'];
 
   return (
     <div
@@ -178,7 +171,7 @@ const panelComponents = {
   hydration: HydrationPanel,
   training: TrainingPanel,
   habits: HabitsPanel,
-  goals: GoalsPanel,
+  milestones: GoalsPanel,
 };
 
 export function DashboardGrid() {

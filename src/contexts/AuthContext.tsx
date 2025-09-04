@@ -11,6 +11,10 @@ export interface User {
   name: string;
   role: UserRole;
   avatar?: string;
+  preferences?: {
+    sidebarState?: 'expanded' | 'collapsed' | 'hover';
+    theme?: 'dark' | 'light' | 'system';
+  };
 }
 
 interface AuthContextType {
@@ -18,9 +22,10 @@ interface AuthContextType {
   loading: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  updateUserPreferences: (preferences: Partial<User['preferences']>) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -74,7 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: userEmail,
           name: firebaseUser.displayName || '',
           role: existingData.role || 'viewer',
-          avatar: firebaseUser.photoURL || undefined
+          avatar: firebaseUser.photoURL || undefined,
+          preferences: existingData.preferences || {
+            sidebarState: 'expanded',
+            theme: 'system'
+          }
         };
 
         // Update last login
@@ -95,11 +104,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           avatar: firebaseUser.photoURL || undefined
         };
 
-        // Create user document in Firestore
+        // Create user document in Firestore with default preferences
         await setDoc(userDocRef, {
           email: userData.email,
           name: userData.name,
           role: userData.role,
+          preferences: {
+            sidebarState: 'expanded',
+            theme: 'system'
+          },
           createdAt: new Date(),
           lastLoginAt: new Date()
         });
@@ -136,8 +149,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserPreferences = async (preferences: Partial<User['preferences']>): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const userDocRef = doc(db, 'users', user.id);
+      const updatedPreferences = {
+        ...user.preferences,
+        ...preferences
+      };
+
+      await setDoc(userDocRef, {
+        preferences: updatedPreferences
+      }, { merge: true });
+
+      setUser({
+        ...user,
+        preferences: updatedPreferences
+      });
+    } catch (error) {
+      console.error('Error updating user preferences:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, updateUserPreferences }}>
       {children}
     </AuthContext.Provider>
   );
@@ -149,4 +186,9 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+export function useAuthSafe() {
+  const context = useContext(AuthContext);
+  return context || { user: null, updateUserPreferences: null };
 }

@@ -43,8 +43,10 @@ export function useWorkoutData(days: number = 30) {
 
 export function useHabits() {
   return useSWR('habits', () => HabitifyService.getHabits(), {
-    refreshInterval: 10 * 60 * 1000, // 10 minutes
+    refreshInterval: 2 * 60 * 1000, // 2 minutes for better sync
     revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    dedupingInterval: 0, // Force fresh data every time
   });
 }
 

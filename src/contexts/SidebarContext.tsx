@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useAuthSafe } from './AuthContext';
 
 type SidebarState = 'expanded' | 'collapsed' | 'hover';
 
@@ -21,32 +22,54 @@ export function SidebarProvider({
   defaultState = 'expanded',
   storageKey = 'sidebar-state',
 }: SidebarProviderProps) {
+  const { user, updateUserPreferences } = useAuthSafe();
   const [sidebarState, setSidebarStateInternal] = useState<SidebarState>(defaultState);
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    // Load from localStorage on mount
-    try {
-      const storedState = localStorage.getItem(storageKey) as SidebarState;
-      if (storedState && ['expanded', 'collapsed', 'hover'].includes(storedState)) {
-        setSidebarStateInternal(storedState);
+    // Load from user preferences first, then localStorage fallback
+    if (user?.preferences?.sidebarState) {
+      setSidebarStateInternal(user.preferences.sidebarState);
+    } else {
+      try {
+        const storedState = localStorage.getItem(storageKey) as SidebarState;
+        if (storedState && ['expanded', 'collapsed', 'hover'].includes(storedState)) {
+          setSidebarStateInternal(storedState);
+        }
+      } catch (error) {
+        console.warn('Failed to load sidebar state from localStorage:', error);
       }
-    } catch (error) {
-      console.warn('Failed to load sidebar state from localStorage:', error);
     }
-  }, [storageKey]);
+  }, [user?.preferences?.sidebarState, storageKey]);
 
   useEffect(() => {
     // Update expanded state based on sidebar state
     setIsExpanded(sidebarState === 'expanded');
   }, [sidebarState]);
 
-  const setSidebarState = (state: SidebarState) => {
+  const setSidebarState = async (state: SidebarState) => {
     setSidebarStateInternal(state);
-    try {
-      localStorage.setItem(storageKey, state);
-    } catch (error) {
-      console.warn('Failed to save sidebar state to localStorage:', error);
+    
+    // Save to user preferences if user is logged in and updateUserPreferences is available
+    if (user && updateUserPreferences) {
+      try {
+        await updateUserPreferences({ sidebarState: state });
+      } catch (error) {
+        console.warn('Failed to save sidebar state to user preferences:', error);
+        // Fallback to localStorage
+        try {
+          localStorage.setItem(storageKey, state);
+        } catch (localError) {
+          console.warn('Failed to save sidebar state to localStorage:', localError);
+        }
+      }
+    } else {
+      // Fallback to localStorage for non-authenticated users or when auth context isn't available
+      try {
+        localStorage.setItem(storageKey, state);
+      } catch (error) {
+        console.warn('Failed to save sidebar state to localStorage:', error);
+      }
     }
   };
 

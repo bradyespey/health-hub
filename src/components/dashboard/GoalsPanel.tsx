@@ -4,41 +4,49 @@ import { Trophy, Target, Calendar, Edit, Save, X, Dumbbell } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useWeightData } from '@/hooks/useData';
 import { useAuth } from '@/contexts/AuthContext';
 
-const initialWeightLossGoal = `**Weight Loss Plan – July 9 to Nov 1, 2025**
+const initialWeightLossGoal = `<h2><strong>Weight Loss Plan – July 9 to Nov 1, 2025</strong></h2>
 
-Goal: Drop from **210 lbs to 185 lbs** in 17 weeks (116 days) at a pace of **~1.5 lbs/week**, focusing on fat loss while maintaining strength and performance through CrossFit and recovery training.
+<p><strong>Goal:</strong> Drop from <strong>210 lbs to 185 lbs</strong> in 17 weeks (116 days) at a pace of <strong>~1.5 lbs/week</strong>, focusing on fat loss while maintaining strength and performance through CrossFit and recovery training.</p>
 
-**Plan Summary**
-• Start: July 9  
-• End: November 1  
-• Total weight loss goal: 25 lbs  
-• Calorie baseline: **1,700 kcal/day**  
-• Workout days: Add back **500–800 kcal** (~2,200–2,500 total)  
-• Weekend strategy: Cycle 1,750 kcal on weekdays, 1,600 kcal on weekends to average ~1,700 kcal/day
+<h3><strong>Plan Summary</strong></h3>
+<ul>
+<li>Start: July 9</li>
+<li>End: November 1</li>
+<li>Total weight loss goal: 25 lbs</li>
+<li>Calorie baseline: <strong>1,700 kcal/day</strong></li>
+<li>Workout days: Add back <strong>500–800 kcal</strong> (~2,200–2,500 total)</li>
+<li>Weekend strategy: Cycle 1,750 kcal on weekdays, 1,600 kcal on weekends to average ~1,700 kcal/day</li>
+</ul>
 
-**Adjustment Rules**
-• If losing more than 2 lbs/week → increase intake to 1,800 kcal  
-• If losing less than 1 lb/week for 2+ weeks → decrease to 1,650 kcal`;
+<h3><strong>Adjustment Rules</strong></h3>
+<ul>
+<li>If losing more than 2 lbs/week → increase intake to 1,800 kcal</li>
+<li>If losing less than 1 lb/week for 2+ weeks → decrease to 1,650 kcal</li>
+</ul>`;
 
-const initialChallengeGoal = `**30-Day Mile + Bodyweight Challenge**
+const initialChallengeGoal = `<h2><strong>30-Day Mile + Bodyweight Challenge</strong></h2>
 
-🎯 **Goal:** Maintain CrossFit 5–6x/week while adding a **daily 1-mile run** + **50 push-ups** + core work for 30 days.
+<p><span style="color: #f59e0b;">🎯</span> <strong>Goal:</strong> Maintain CrossFit 5–6x/week while adding a <strong>daily 1-mile run</strong> + <strong>50 push-ups</strong> + core work for 30 days.</p>
 
-📌 **Rules & Tracking**
-• **Run:** 1 mile (easy/moderate pace most days, 1–2 faster efforts/week)  
-• **Bodyweight:** 50 push-ups + core variation of the day  
-• **Apple Watch:** *Outdoor Run* → mile tracking, *Functional Strength Training* → push-ups + core  
-• **Nutrition:** ≤1,700 calories/day net (add back calories for workouts >250 kcal)
+<h3><span style="color: #3b82f6;">📌</span> <strong>Rules & Tracking</strong></h3>
+<ul>
+<li><strong>Run:</strong> 1 mile (easy/moderate pace most days, 1–2 faster efforts/week)</li>
+<li><strong>Bodyweight:</strong> 50 push-ups + core variation of the day</li>
+<li><strong>Apple Watch:</strong> <em>Outdoor Run</em> → mile tracking, <em>Functional Strength Training</em> → push-ups + core</li>
+<li><strong>Nutrition:</strong> ≤1,700 calories/day net (add back calories for workouts >250 kcal)</li>
+</ul>
 
-💡 **Tips for Success**
-• Keep 80–90% of runs at conversational pace  
-• Break push-ups into sets (e.g., 20-15-15) to keep form strong  
-• Rotate core work to avoid hip flexor fatigue  
-• On heavy CrossFit days, keep the mile easy and core work low-intensity`;
+<h3><span style="color: #10b981;">💡</span> <strong>Tips for Success</strong></h3>
+<ul>
+<li>Keep 80–90% of runs at conversational pace</li>
+<li>Break push-ups into sets (e.g., 20-15-15) to keep form strong</li>
+<li>Rotate core work to avoid hip flexor fatigue</li>
+<li>On heavy CrossFit days, keep the mile easy and core work low-intensity</li>
+</ul>`;
 
 const milestoneRewards = [
   { weight: 205, date: 'Aug 1', reward: 'Top Golf date night', cost: '$75' },
@@ -61,6 +69,7 @@ export function GoalsPanel() {
   const isAdmin = user?.role === 'admin';
 
   const handleSaveWeightLoss = () => {
+    console.log('Weight Loss Content:', weightLossContent);
     // TODO: Save to Firestore
     setEditingWeightLoss(false);
   };
@@ -100,10 +109,11 @@ export function GoalsPanel() {
         <CardContent>
           {editingWeightLoss ? (
             <div className="space-y-2">
-              <Textarea
-                value={weightLossContent}
-                onChange={(e) => setWeightLossContent(e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
+              <RichTextEditor
+                content={weightLossContent}
+                onChange={setWeightLossContent}
+                placeholder="Enter your weight loss plan..."
+                minHeight="300px"
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSaveWeightLoss}>Save</Button>
@@ -111,13 +121,11 @@ export function GoalsPanel() {
               </div>
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none">
-              {weightLossContent.split('\n').map((line, index) => (
-                <p key={index} className={line.startsWith('**') ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                  {line.replace(/\*\*/g, '')}
-                </p>
-              ))}
-            </div>
+            <div 
+              className="rich-text-content text-sm max-w-none"
+              style={{ lineHeight: '1.6' }}
+              dangerouslySetInnerHTML={{ __html: weightLossContent }}
+            />
           )}
         </CardContent>
       </Card>
@@ -145,10 +153,11 @@ export function GoalsPanel() {
         <CardContent>
           {editingChallenge ? (
             <div className="space-y-2">
-              <Textarea
-                value={challengeContent}
-                onChange={(e) => setChallengeContent(e.target.value)}
-                className="min-h-[150px] font-mono text-sm"
+              <RichTextEditor
+                content={challengeContent}
+                onChange={setChallengeContent}
+                placeholder="Enter your 30-day challenge details..."
+                minHeight="250px"
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSaveChallenge}>Save</Button>
@@ -156,13 +165,11 @@ export function GoalsPanel() {
               </div>
             </div>
           ) : (
-            <div className="prose prose-sm max-w-none">
-              {challengeContent.split('\n').map((line, index) => (
-                <p key={index} className={line.startsWith('**') || line.startsWith('🎯') || line.startsWith('📌') || line.startsWith('💡') ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                  {line}
-                </p>
-              ))}
-            </div>
+            <div 
+              className="rich-text-content text-sm max-w-none"
+              style={{ lineHeight: '1.6' }}
+              dangerouslySetInnerHTML={{ __html: challengeContent }}
+            />
           )}
         </CardContent>
       </Card>

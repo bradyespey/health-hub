@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid } from 'lucide-react';
+import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -34,7 +34,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
     to: new Date(),
   });
   const { theme, setTheme } = useTheme();
-  const { isEditMode, setEditMode } = useLayout();
+  const { isEditMode, setEditMode, cancelEdit } = useLayout();
   const { setSidebarState } = useSidebarState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -46,7 +46,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
     { title: 'Hydration', url: '/hydration', icon: Droplets },
     { title: 'Training', url: '/training', icon: Dumbbell },
     { title: 'Habits', url: '/habits', icon: CheckSquare },
-    { title: 'Milestones', url: '/milestones', icon: Trophy },
+    { title: 'Goals', url: '/goals', icon: Trophy },
   ];
 
   const isActive = (path: string) => {
@@ -133,27 +133,40 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
             <span className="hidden sm:inline">Refresh</span>
           </Button>
 
-          {/* Edit Layout Button - Admin only */}
+          {/* Edit Layout Buttons - Admin only */}
           {userRole === 'admin' && (
-            <Button
-              variant={isEditMode ? "default" : "outline"}
-              size="sm"
-              onClick={() => setEditMode(!isEditMode)}
-              className="gap-2"
-            >
-              {isEditMode ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  <span className="hidden sm:inline">Done</span>
-                </>
-              ) : (
-                <>
-                  <Edit3 className="h-4 w-4" />
-                  <span className="hidden lg:inline">Edit Layout</span>
-                  <span className="hidden sm:inline lg:hidden">Edit</span>
-                </>
+            <>
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={cancelEdit}
+                  className="gap-2"
+                >
+                  <Ban className="h-4 w-4" />
+                  <span className="hidden sm:inline">Cancel</span>
+                </Button>
               )}
-            </Button>
+              <Button
+                variant={isEditMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEditMode(!isEditMode)}
+                className="gap-2"
+              >
+                {isEditMode ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span className="hidden sm:inline">Done</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="h-4 w-4" />
+                    <span className="hidden lg:inline">Edit Layout</span>
+                    <span className="hidden sm:inline lg:hidden">Edit</span>
+                  </>
+                )}
+              </Button>
+            </>
           )}
 
           {/* Theme Toggle */}

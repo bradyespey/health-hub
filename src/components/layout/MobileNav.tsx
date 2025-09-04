@@ -17,7 +17,7 @@ const navigationItems = [
   { title: 'Hydration', url: '/hydration', icon: Droplets },
   { title: 'Training', url: '/training', icon: Dumbbell },
   { title: 'Habits', url: '/habits', icon: CheckSquare },
-  { title: 'Milestones', url: '/milestones', icon: Trophy },
+  { title: 'Goals', url: '/goals', icon: Trophy },
 ];
 
 export function MobileNav() {
