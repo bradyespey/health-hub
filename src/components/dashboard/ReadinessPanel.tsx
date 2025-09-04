@@ -60,16 +60,18 @@ export function ReadinessPanel() {
       transition={{ duration: 0.3 }}
     >
       <Card className="h-full relative">
-        <SampleBadge />
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-accent" />
               Readiness & Recovery
             </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <SampleBadge />
+              <Badge variant="outline" className="text-xs">
+                {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Badge>
+            </div>
           </div>
           <CardDescription>
             7-day HRV trend and today's readiness score

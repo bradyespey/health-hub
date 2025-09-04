@@ -75,16 +75,18 @@ export function HydrationPanel() {
       transition={{ duration: 0.3, delay: 0.2 }}
     >
       <Card className="h-full relative">
-        <SampleBadge />
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Droplets className="h-5 w-5 text-accent" />
               Hydration
             </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <SampleBadge />
+              <Badge variant="outline" className="text-xs">
+                {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Badge>
+            </div>
           </div>
           <CardDescription>
             Water intake from Apple Health

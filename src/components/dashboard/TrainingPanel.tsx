@@ -96,16 +96,18 @@ export function TrainingPanel() {
       transition={{ duration: 0.3, delay: 0.3 }}
     >
       <Card className="h-full relative">
-        <SampleBadge />
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5 text-accent" />
               Training Load
             </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <SampleBadge />
+              <Badge variant="outline" className="text-xs">
+                {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Badge>
+            </div>
           </div>
           <CardDescription>
             30-day workout calendar heat-map
