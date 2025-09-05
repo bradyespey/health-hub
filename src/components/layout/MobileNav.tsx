@@ -1,27 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Activity, 
-  Apple, 
-  Droplets, 
-  Dumbbell, 
-  CheckSquare, 
-  Trophy,
-  LayoutGrid
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navigationItems = [
-  { title: 'Dashboard', url: '/', icon: LayoutGrid },
-  { title: 'Readiness', url: '/readiness', icon: Activity },
-  { title: 'Nutrition', url: '/nutrition', icon: Apple },
-  { title: 'Hydration', url: '/hydration', icon: Droplets },
-  { title: 'Training', url: '/training', icon: Dumbbell },
-  { title: 'Habits', url: '/habits', icon: CheckSquare },
-  { title: 'Goals', url: '/goals', icon: Trophy },
-];
+import { useNavigation, iconMap } from '@/contexts/NavigationContext';
 
 export function MobileNav() {
   const location = useLocation();
+  const { navigationItems } = useNavigation();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -34,7 +17,7 @@ export function MobileNav() {
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t">
       <div className="flex items-center justify-around py-2 px-1">
         {navigationItems.slice(0, 5).map((item) => {
-          const Icon = item.icon;
+          const Icon = iconMap[item.icon as keyof typeof iconMap];
           const active = isActive(item.url);
           
           return (

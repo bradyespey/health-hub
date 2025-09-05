@@ -13,6 +13,21 @@ export interface CardLayout {
   size: CardSize;
 }
 
+export interface LayoutPreset {
+  id: string;
+  name: string;
+  layouts: CardLayout[];
+  createdAt: Date;
+  isDefault?: boolean;
+}
+
+export interface NavigationItem {
+  title: string;
+  url: string;
+  icon: string; // Store as string instead of component for Firestore
+  order: number;
+}
+
 interface LayoutContextType {
   layouts: CardLayout[];
   isEditMode: boolean;
@@ -24,6 +39,12 @@ interface LayoutContextType {
   deleteAllTextCards: () => void;
   cancelEdit: () => void;
   loading: boolean;
+  // Layout preset functions
+  saveLayoutPreset: (name: string) => Promise<void>;
+  loadLayoutPreset: (presetId: string) => Promise<void>;
+  getLayoutPresets: () => Promise<LayoutPreset[]>;
+  deleteLayoutPreset: (presetId: string) => Promise<void>;
+  setDefaultLayout: (presetId?: string) => Promise<void>;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -83,9 +104,12 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           await saveLayoutToFirestore(migratedLayouts);
         }
       } else {
-        // Use defaults and save them
-        setOriginalLayouts(defaultLayouts);
-        await saveLayoutToFirestore(defaultLayouts);
+        // Load system default or use hardcoded default
+        const systemDefaultLayouts = await loadSystemDefaultLayout();
+        const layoutsToUse = systemDefaultLayouts || defaultLayouts;
+        setLayouts(layoutsToUse);
+        setOriginalLayouts(layoutsToUse);
+        await saveLayoutToFirestore(layoutsToUse);
       }
     } catch (error) {
       console.error('Error loading layout:', error);
@@ -94,12 +118,33 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loadSystemDefaultLayout = async (): Promise<CardLayout[] | null> => {
+    try {
+      const systemDoc = await getDoc(doc(db, 'system', 'settings'));
+      if (systemDoc.exists() && systemDoc.data().defaultLayout) {
+        return systemDoc.data().defaultLayout as CardLayout[];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error loading system default layout:', error);
+      return null;
+    }
+  };
+
   const saveLayoutToFirestore = async (newLayouts: CardLayout[]) => {
     if (!user?.id) return;
 
     try {
+      // Clean the layouts data to remove any functions or invalid Firestore data
+      const cleanLayouts = newLayouts.map(layout => ({
+        id: layout.id,
+        size: layout.size,
+        order: layout.order,
+        ...(layout.colSpan && { colSpan: layout.colSpan })
+      }));
+
       await setDoc(doc(db, 'layouts', user.id, 'pages', 'dashboard'), {
-        layouts: newLayouts,
+        layouts: cleanLayouts,
         updatedAt: new Date()
       });
     } catch (error) {
@@ -186,6 +231,103 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     setIsEditMode(false);
   };
 
+  const saveLayoutPreset = async (name: string) => {
+    if (!user?.id) return;
+
+    const presetId = `preset-${Date.now()}`;
+    const preset: LayoutPreset = {
+      id: presetId,
+      name,
+      layouts: [...layouts],
+      createdAt: new Date()
+    };
+
+    try {
+      await setDoc(doc(db, 'layouts', user.id, 'presets', presetId), preset);
+      console.log('Layout preset saved:', name);
+    } catch (error) {
+      console.error('Error saving layout preset:', error);
+      throw error;
+    }
+  };
+
+  const loadLayoutPreset = async (presetId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const presetDoc = await getDoc(doc(db, 'layouts', user.id, 'presets', presetId));
+      if (presetDoc.exists()) {
+        const preset = presetDoc.data() as LayoutPreset;
+        setLayouts(preset.layouts);
+        setOriginalLayouts(preset.layouts);
+        await saveLayoutToFirestore(preset.layouts);
+        console.log('Layout preset loaded:', preset.name);
+      }
+    } catch (error) {
+      console.error('Error loading layout preset:', error);
+      throw error;
+    }
+  };
+
+  const getLayoutPresets = async (): Promise<LayoutPreset[]> => {
+    if (!user?.id) return [];
+
+    try {
+      const { getDocs, collection } = await import('firebase/firestore');
+      const presetsSnapshot = await getDocs(collection(db, 'layouts', user.id, 'presets'));
+      return presetsSnapshot.docs.map(doc => ({
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
+      })) as LayoutPreset[];
+    } catch (error) {
+      console.error('Error getting layout presets:', error);
+      return [];
+    }
+  };
+
+  const deleteLayoutPreset = async (presetId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'layouts', user.id, 'presets', presetId));
+      console.log('Layout preset deleted:', presetId);
+    } catch (error) {
+      console.error('Error deleting layout preset:', error);
+      throw error;
+    }
+  };
+
+  const setDefaultLayout = async (presetId?: string) => {
+    if (!user?.id || user.role !== 'admin') return;
+
+    try {
+      if (presetId) {
+        // Set a specific preset as default
+        const presetDoc = await getDoc(doc(db, 'layouts', user.id, 'presets', presetId));
+        if (presetDoc.exists()) {
+          const preset = presetDoc.data() as LayoutPreset;
+          await setDoc(doc(db, 'system', 'settings'), {
+            defaultLayout: preset.layouts,
+            updatedAt: new Date(),
+            updatedBy: user.id
+          }, { merge: true });
+        }
+      } else {
+        // Set current layout as default
+        await setDoc(doc(db, 'system', 'settings'), {
+          defaultLayout: layouts,
+          updatedAt: new Date(),
+          updatedBy: user.id
+        }, { merge: true });
+      }
+      console.log('Default layout updated');
+    } catch (error) {
+      console.error('Error setting default layout:', error);
+      throw error;
+    }
+  };
+
   return (
     <LayoutContext.Provider value={{
       layouts,
@@ -197,7 +339,12 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       deleteCard,
       deleteAllTextCards,
       cancelEdit,
-      loading
+      loading,
+      saveLayoutPreset,
+      loadLayoutPreset,
+      getLayoutPresets,
+      deleteLayoutPreset,
+      setDefaultLayout
     }}>
       {children}
     </LayoutContext.Provider>

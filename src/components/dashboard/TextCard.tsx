@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Edit, Save, X, Trash2 } from 'lucide-react';
+import { FileText, Edit, Save, X, Trash2, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useAuth } from '@/contexts/AuthContext';
+import { TextCardService } from '@/services/textCardService';
+import { useLocation } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface TextCardProps {
   id: string;
@@ -30,19 +33,47 @@ export function TextCard({
   const [content, setContent] = useState(initialContent);
   const [tempContent, setTempContent] = useState(content);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const location = useLocation();
+  const { toast } = useToast();
 
   const handleEdit = () => {
     setTempContent(content);
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setContent(tempContent);
-    setLastUpdated(new Date());
-    setIsEditing(false);
-    // TODO: Save to Firestore
-    console.log(`Saving text card ${id}:`, tempContent);
+  const handleSave = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const page = TextCardService.getPageFromLocation(location.pathname);
+      await TextCardService.saveTextCard(user.id, id, {
+        title,
+        description,
+        content: tempContent,
+        page
+      });
+      
+      setContent(tempContent);
+      setLastUpdated(new Date());
+      setIsEditing(false);
+      
+      toast({
+        title: "Saved",
+        description: "Text card saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving text card:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save text card",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -50,11 +81,51 @@ export function TextCard({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    if (onDelete && window.confirm('Are you sure you want to delete this card?')) {
-      onDelete(id);
+  const handleDelete = async () => {
+    if (!onDelete || !user) return;
+    
+    if (window.confirm('Are you sure you want to delete this card? This action cannot be undone.')) {
+      try {
+        const page = TextCardService.getPageFromLocation(location.pathname);
+        await TextCardService.deleteTextCard(user.id, id, page);
+        onDelete(id);
+        
+        toast({
+          title: "Deleted",
+          description: "Text card deleted successfully",
+        });
+      } catch (error) {
+        console.error('Error deleting text card:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete text card",
+          variant: "destructive",
+        });
+      }
     }
   };
+
+  // Load existing content on mount
+  useEffect(() => {
+    const loadExistingContent = async () => {
+      if (!user || !TextCardService.isTextCard(id)) return;
+      
+      try {
+        const page = TextCardService.getPageFromLocation(location.pathname);
+        const existingCard = await TextCardService.loadTextCard(user.id, id, page);
+        
+        if (existingCard) {
+          setContent(existingCard.content);
+          setTempContent(existingCard.content);
+          setLastUpdated(existingCard.updatedAt);
+        }
+      } catch (error) {
+        console.error('Error loading existing text card:', error);
+      }
+    };
+
+    loadExistingContent();
+  }, [user, id, location.pathname]);
 
   return (
     <Card className="relative">
@@ -136,9 +207,14 @@ export function TextCard({
             variant="default"
             size="sm"
             onClick={handleSave}
+            disabled={loading}
             className="h-7 w-7 p-0 shadow-sm"
           >
-            <Save className="h-3 w-3" />
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Save className="h-3 w-3" />
+            )}
           </Button>
         </div>
       )}

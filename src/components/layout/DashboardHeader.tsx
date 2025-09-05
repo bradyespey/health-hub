@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid, Ban, Plus } from 'lucide-react';
+import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid, Ban, Plus, Save, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -20,8 +20,10 @@ import { useTheme } from '@/components/ThemeProvider';
 import { UserRole } from '@/contexts/AuthContext';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useSidebarState } from '@/contexts/SidebarContext';
+import { useNavigation, iconMap } from '@/contexts/NavigationContext';
 import { cn } from '@/lib/utils';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { LayoutPresetDialog } from '@/components/ui/layout-preset-dialog';
 
 interface DashboardHeaderProps {
   onRefresh: () => void;
@@ -37,6 +39,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
   const { theme, setTheme } = useTheme();
   const { isEditMode, setEditMode, cancelEdit, addCard } = useLayout();
   const { setSidebarState } = useSidebarState();
+  const { navigationItems } = useNavigation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -50,15 +53,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
   };
 
 
-  const navigationItems = [
-    { title: 'Dashboard', url: '/', icon: LayoutGrid },
-    { title: 'Readiness', url: '/readiness', icon: Activity },
-    { title: 'Nutrition', url: '/nutrition', icon: Apple },
-    { title: 'Hydration', url: '/hydration', icon: Droplets },
-    { title: 'Training', url: '/training', icon: Dumbbell },
-    { title: 'Habits', url: '/habits', icon: CheckSquare },
-    { title: 'Goals', url: '/goals', icon: Trophy },
-  ];
+  // Navigation items now come from NavigationContext
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -158,6 +153,20 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Add Card</span>
                 </Button>
+              )}
+              
+              {/* Layout Presets Button - Only in edit mode */}
+              {isEditMode && (
+                <LayoutPresetDialog>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                    <span className="hidden sm:inline">Layouts</span>
+                  </Button>
+                </LayoutPresetDialog>
               )}
               
               
@@ -279,7 +288,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
           <nav className="p-4">
             <div className="space-y-1">
               {navigationItems.map((item) => {
-                const Icon = item.icon;
+                const Icon = iconMap[item.icon as keyof typeof iconMap] || LayoutGrid;
                 const active = isActive(item.url);
                 
                 return (

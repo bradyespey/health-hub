@@ -42,16 +42,30 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        // Configure StarterKit to avoid duplicate extensions
+        bulletList: {
+          HTMLAttributes: {
+            class: 'prose-bullet-list',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'prose-ordered-list',
+          },
+        },
+        listItem: {
+          HTMLAttributes: {
+            class: 'prose-list-item',
+          },
+        },
+      }),
       TextStyle,
       Color,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
       Underline,
-      BulletList,
-      OrderedList,
-      ListItem,
     ],
     content,
     onUpdate: ({ editor }) => {

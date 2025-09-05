@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Edit, Save, X } from 'lucide-react';
+import { Trophy, Edit, Save, X, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useAuth } from '@/contexts/AuthContext';
+import { TextCardService } from '@/services/textCardService';
+import { useToast } from '@/hooks/use-toast';
 
 const initialWeightLossGoal = `<h2><strong>Weight Loss Plan – July 9 to Nov 1, 2025</strong></h2>
 
@@ -32,24 +34,72 @@ export function LongTermGoalCard() {
   const [goalContent, setGoalContent] = useState(initialWeightLossGoal);
   const [tempContent, setTempContent] = useState(goalContent);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleEdit = () => {
     setTempContent(goalContent);
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setGoalContent(tempContent);
-    setLastUpdated(new Date());
-    setIsEditing(false);
-    // TODO: Save to Firestore
+  const handleSave = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      await TextCardService.saveTextCard(user.id, 'long-term-goal', {
+        title: 'Long-term Goal',
+        description: 'Weight loss plan with milestone rewards',
+        content: tempContent,
+        page: 'goals'
+      });
+      
+      setGoalContent(tempContent);
+      setLastUpdated(new Date());
+      setIsEditing(false);
+      
+      toast({
+        title: "Saved",
+        description: "Long-term goal saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving long-term goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save long-term goal",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setTempContent(goalContent);
     setIsEditing(false);
   };
+
+  // Load existing content on mount
+  useEffect(() => {
+    const loadExistingContent = async () => {
+      if (!user) return;
+      
+      try {
+        const existingCard = await TextCardService.loadTextCard(user.id, 'long-term-goal', 'goals');
+        
+        if (existingCard) {
+          setGoalContent(existingCard.content);
+          setTempContent(existingCard.content);
+          setLastUpdated(existingCard.updatedAt);
+        }
+      } catch (error) {
+        console.error('Error loading long-term goal:', error);
+      }
+    };
+
+    loadExistingContent();
+  }, [user]);
 
   return (
     <Card className="relative">
@@ -120,9 +170,14 @@ export function LongTermGoalCard() {
             variant="default"
             size="sm"
             onClick={handleSave}
+            disabled={loading}
             className="h-7 w-7 p-0 shadow-sm"
           >
-            <Save className="h-3 w-3" />
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Save className="h-3 w-3" />
+            )}
           </Button>
         </div>
       )}

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Edit, Save, X } from 'lucide-react';
+import { Dumbbell, Edit, Save, X, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { useAuth } from '@/contexts/AuthContext';
+import { TextCardService } from '@/services/textCardService';
+import { useToast } from '@/hooks/use-toast';
 
 const initialChallengeGoal = `<h2><strong>30-Day Mile + Bodyweight Challenge</strong></h2>
 
@@ -32,24 +34,72 @@ export function ChallengeCard() {
   const [challengeContent, setChallengeContent] = useState(initialChallengeGoal);
   const [tempContent, setTempContent] = useState(challengeContent);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleEdit = () => {
     setTempContent(challengeContent);
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setChallengeContent(tempContent);
-    setLastUpdated(new Date());
-    setIsEditing(false);
-    // TODO: Save to Firestore
+  const handleSave = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      await TextCardService.saveTextCard(user.id, 'challenge', {
+        title: '30-Day Challenge',
+        description: 'Current fitness challenge progress',
+        content: tempContent,
+        page: 'goals'
+      });
+      
+      setChallengeContent(tempContent);
+      setLastUpdated(new Date());
+      setIsEditing(false);
+      
+      toast({
+        title: "Saved",
+        description: "30-day challenge saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving challenge:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save 30-day challenge",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
     setTempContent(challengeContent);
     setIsEditing(false);
   };
+
+  // Load existing content on mount
+  useEffect(() => {
+    const loadExistingContent = async () => {
+      if (!user) return;
+      
+      try {
+        const existingCard = await TextCardService.loadTextCard(user.id, 'challenge', 'goals');
+        
+        if (existingCard) {
+          setChallengeContent(existingCard.content);
+          setTempContent(existingCard.content);
+          setLastUpdated(existingCard.updatedAt);
+        }
+      } catch (error) {
+        console.error('Error loading challenge:', error);
+      }
+    };
+
+    loadExistingContent();
+  }, [user]);
 
   return (
     <Card className="relative">
@@ -120,9 +170,14 @@ export function ChallengeCard() {
             variant="default"
             size="sm"
             onClick={handleSave}
+            disabled={loading}
             className="h-7 w-7 p-0 shadow-sm"
           >
-            <Save className="h-3 w-3" />
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Save className="h-3 w-3" />
+            )}
           </Button>
         </div>
       )}

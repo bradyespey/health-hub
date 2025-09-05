@@ -20,16 +20,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebarState } from '@/contexts/SidebarContext';
+import { useNavigation, iconMap } from '@/contexts/NavigationContext';
 
-const navigationItems = [
-  { title: 'Dashboard', url: '/', icon: LayoutGrid },
-  { title: 'Readiness', url: '/readiness', icon: Activity },
-  { title: 'Nutrition', url: '/nutrition', icon: Apple },
-  { title: 'Hydration', url: '/hydration', icon: Droplets },
-  { title: 'Training', url: '/training', icon: Dumbbell },
-  { title: 'Habits', url: '/habits', icon: CheckSquare },
-  { title: 'Goals', url: '/goals', icon: Trophy },
-];
+// Default navigation items moved to NavigationContext
 
 const sidebarStates = [
   { value: 'expanded', label: 'Always Expanded' },
@@ -41,6 +34,7 @@ export function DashboardSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { sidebarState, setSidebarState, isExpanded } = useSidebarState();
+  const { navigationItems } = useNavigation();
   const [isHovered, setIsHovered] = useState(false);
 
   const shouldShowExpanded = isExpanded || (sidebarState === 'hover' && isHovered);
@@ -95,7 +89,7 @@ export function DashboardSidebar() {
               </div>
             )}
             {navigationItems.map((item) => {
-              const Icon = item.icon;
+              const Icon = iconMap[item.icon as keyof typeof iconMap] || Settings;
               const active = isActive(item.url);
               
               if (!shouldShowExpanded) {
@@ -139,6 +133,50 @@ export function DashboardSidebar() {
             })}
           </div>
         </nav>
+
+        {/* Admin Section */}
+        {user?.role === 'admin' && (
+          <div className="p-2 border-t flex-shrink-0">
+            {shouldShowExpanded && (
+              <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Admin
+              </div>
+            )}
+            {!shouldShowExpanded ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to="/admin"
+                    className={cn(
+                      "flex items-center justify-center h-10 w-10 rounded-lg transition-colors mx-auto",
+                      isActive('/admin')
+                        ? "bg-accent text-accent-foreground" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    )}
+                  >
+                    <Settings className="h-5 w-5" />
+                  </NavLink>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Admin Panel</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <NavLink
+                to="/admin"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                  isActive('/admin')
+                    ? "bg-accent text-accent-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <Settings className="h-5 w-5" />
+                <span>Admin Panel</span>
+              </NavLink>
+            )}
+          </div>
+        )}
 
         {/* Settings & Sidebar Controls */}
         <div className="p-2 border-t flex-shrink-0">
