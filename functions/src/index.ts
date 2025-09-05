@@ -109,5 +109,109 @@ export const backupToGoogleDrive = functions.https.onRequest(async (req, res) =>
   });
 });
 
+/**
+ * HTTP Cloud Function to ingest Apple Health data from iOS Shortcut
+ */
+export const ingestAppleHealth = functions.https.onRequest(async (req, res) => {
+  return corsHandler(req, res, async () => {
+    try {
+      // Verify request method
+      if (req.method !== 'POST') {
+        res.status(405).send('Method Not Allowed');
+        return;
+      }
+
+      // Verify content type
+      if (req.headers['content-type'] !== 'application/json') {
+        res.status(400).send('Content-Type must be application/json');
+        return;
+      }
+
+      const { userId, data } = req.body;
+
+      if (!userId || !data || !Array.isArray(data)) {
+        res.status(400).json({
+          error: 'Invalid payload. Expected: { userId: string, data: Array<{ type: string, date: string, value: number, unit?: string }> }'
+        });
+        return;
+      }
+
+      console.log(`Received Apple Health data for user: ${userId}, records: ${data.length}`);
+
+      // Get Firestore instance
+      const db = admin.firestore();
+      
+      // Process each health record
+      const batch = db.batch();
+      const processedDates = new Set<string>();
+
+      for (const record of data) {
+        const { type, date, value, unit } = record;
+
+        // Validate record structure
+        if (!type || !date || value === undefined) {
+          console.warn('Skipping invalid record:', record);
+          continue;
+        }
+
+        // Ensure date is in YYYY-MM-DD format
+        const dateStr = new Date(date).toISOString().split('T')[0];
+        
+        // Create document path: appleHealth/{userId}/{date}/{type}
+        const docRef = db
+          .collection('appleHealth')
+          .doc(userId)
+          .collection(dateStr)
+          .doc(type);
+
+        // Prepare data for storage
+        const healthData = {
+          type,
+          date: dateStr,
+          value,
+          unit: unit || '',
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          source: 'ios-shortcut'
+        };
+
+        batch.set(docRef, healthData, { merge: true });
+        processedDates.add(dateStr);
+      }
+
+      // Also update a "latest" document for quick access
+      const latestRef = db
+        .collection('appleHealth')
+        .doc(userId)
+        .collection('latest')
+        .doc('summary');
+
+      batch.set(latestRef, {
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+        recordCount: data.length,
+        datesUpdated: Array.from(processedDates)
+      }, { merge: true });
+
+      // Commit the batch
+      await batch.commit();
+
+      console.log(`Successfully processed ${data.length} Apple Health records for ${processedDates.size} dates`);
+
+      res.status(200).json({
+        success: true,
+        message: `Processed ${data.length} records for ${processedDates.size} dates`,
+        processedDates: Array.from(processedDates)
+      });
+
+    } catch (error) {
+      console.error('Error ingesting Apple Health data:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to ingest Apple Health data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+});
+
 // Helper functions for backup functionality
 // These will be used when we add the scheduled backup later

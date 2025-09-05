@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Droplets, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,11 +7,24 @@ import { Progress } from '@/components/ui/progress';
 import { SampleBadge } from '@/components/ui/sample-badge';
 import { useTodayHydration, useHydrationData } from '@/hooks/useData';
 import { AppleHealthService } from '@/services/appleHealthService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function HydrationPanel() {
+  const { user } = useAuth();
   const { data: todayData, isLoading: todayLoading } = useTodayHydration();
   const { data: weekData, isLoading: weekLoading } = useHydrationData(7);
-  const lastUpdated = AppleHealthService.getLastUpdated();
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const fetchLastUpdated = async () => {
+      const updated = await AppleHealthService.getLastUpdated(user?.id);
+      setLastUpdated(updated);
+    };
+    
+    if (user) {
+      fetchLastUpdated();
+    }
+  }, [user]);
 
   if (todayLoading || weekLoading) {
     return (

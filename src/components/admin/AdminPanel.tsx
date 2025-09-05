@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLayout, NavigationItem } from '@/contexts/LayoutContext';
 import { useNavigation } from '@/contexts/NavigationContext';
 import { BackupManager } from './BackupManager';
+import { AppleHealthTest } from './AppleHealthTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -334,6 +335,9 @@ export function AdminPanel() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Apple Health Data Testing */}
+      <AppleHealthTest />
 
       {/* Data Backup & Restore */}
       <BackupManager />

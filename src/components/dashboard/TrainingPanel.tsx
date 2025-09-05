@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Dumbbell, Calendar, Flame, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,10 +7,23 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SampleBadge } from '@/components/ui/sample-badge';
 import { useWorkoutData } from '@/hooks/useData';
 import { AppleHealthService } from '@/services/appleHealthService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function TrainingPanel() {
+  const { user } = useAuth();
   const { data: workoutData, isLoading } = useWorkoutData(30);
-  const lastUpdated = AppleHealthService.getLastUpdated();
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const fetchLastUpdated = async () => {
+      const updated = await AppleHealthService.getLastUpdated(user?.id);
+      setLastUpdated(updated);
+    };
+    
+    if (user) {
+      fetchLastUpdated();
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
