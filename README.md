@@ -1,103 +1,122 @@
-# Welcome to your Lovable project
+# HealthHub
+**Scope**: This README replaces prior selected overview docs
 
-## Project info
+## Overview
+Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours.
 
-**URL**: https://lovable.dev/projects/fde0a9c9-ce7d-4231-b821-82c3a88c41f0
+## Live and Admin
+- 🌐 **App URL**: https://healthhub.theespeys.com
+- 🔥 **Firebase Console**: healthhub-d43d3
+- 🚀 **Netlify Dashboard**: espeyhealthhub
+- 📊 **Lovable Project**: Health dashboard development platform
+- 🔐 **Auth Roles**: Admin (Brady) & Viewer (Jenny)
 
-## How can I edit this code?
+## Tech Stack
+- ⚛️ **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS
+- 🎨 **UI**: shadcn/ui component library + Framer Motion animations
+- 🔥 **Backend**: Firebase (Auth, Firestore, Cloud Functions, Cloud Messaging)
+- 📊 **Data Viz**: Recharts for charts and analytics
+- 🔐 **Auth**: Firebase Google OAuth with email restrictions
+- 🎯 **Layout**: Drag-and-drop layouts via @dnd-kit with Firestore persistence
+- 📱 **PWA**: Progressive Web App with offline support
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/fde0a9c9-ce7d-4231-b821-82c3a88c41f0) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Set up environment variables.
-# Copy .env.example to .env.local and add your Firebase configuration
-cp .env.example .env.local
-
-# Step 5: Start the development server with auto-reloading and an instant preview.
+## Quick Start
+```bash
+git clone https://github.com/bradyespey/health-hub
+cd HealthHub
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## Environment Setup
-
-This project requires Firebase configuration for authentication. Create a `.env.local` file with the following variables:
+## Environment
+Required environment variables:
 
 ```env
 # Firebase Configuration
-VITE_FIREBASE_API_KEY=your_firebase_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_API_KEY=YOUR_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN=healthhub-d43d3.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=healthhub-d43d3
+VITE_FIREBASE_STORAGE_BUCKET=healthhub-d43d3.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
+VITE_FIREBASE_APP_ID=YOUR_APP_ID
 
-# Other API Keys (for future use)
-VITE_HABITIFY_API_KEY=your_habitify_api_key
-VITE_LOSE_IT_API_KEY=your_lose_it_api_key
-VITE_ATHLYTIC_API_KEY=your_athlytic_api_key
+# Health App API Keys
+VITE_HABITIFY_API_KEY=YOUR_HABITIFY_KEY
+VITE_LOSE_IT_API_KEY=YOUR_LOSE_IT_KEY
+VITE_ATHLYTIC_API_KEY=YOUR_ATHLYTIC_KEY
+
+# Google Drive Backup (Cloud Functions)
+GOOGLE_PROJECT_ID=YOUR_PROJECT_ID
+GOOGLE_PRIVATE_KEY_ID=YOUR_PRIVATE_KEY_ID
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+GOOGLE_CLIENT_EMAIL=health-hub-backup@YOUR_PROJECT.iam.gserviceaccount.com
+GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 ```
 
-To get these values:
-1. Create a Firebase project at https://console.firebase.google.com
-2. Enable Authentication with Google provider
-3. Create a Firestore database
-4. Get your config from Project Settings > General > Your apps
+## Run Modes (Debug, Headless, Profiles)
+- 🐛 **Debug Mode**: `npm run dev` with browser dev tools and Firebase emulator
+- 📱 **PWA Mode**: Installable app with offline capabilities and push notifications
+- 🌐 **Production Mode**: Deployed via Netlify with Firebase Cloud Functions
 
-## What technologies are used for this project?
+## Scripts and Ops
+- 🔧 **Development**: `npm run dev` — Start local development server
+- 🏗️ **Build**: `npm run build` — Production build with TypeScript compilation
+- 🔍 **Lint**: `npm run lint` — ESLint code checking
+- 👀 **Preview**: `npm run preview` — Preview production build
+- 🔥 **Deploy Functions**: `firebase deploy --only functions` — Deploy Cloud Functions
+- 📦 **Backup**: Manual and automated Google Drive backups via admin panel
 
-This project is built with:
+### Data Pipeline Automation
+- ⏰ **Cloud Functions**: Cron every 2h fetches Athlytic, Lose It!, Habitify data
+- 📱 **iOS Shortcut**: Exports Apple Health JSON via HTTPS POST to Firebase Function
+- 🔔 **Push Notifications**: 8 PM reminders for incomplete habits (Firebase Cloud Messaging)
+- 🔄 **Sync Status**: Monitoring with failure alerts and manual retry options
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Firebase (Authentication & Firestore)
+## Deploy
+- 🚀 **Frontend**: Automatic via GitHub integration to Netlify
+- 📦 **Build Command**: `npm run build`
+- 📁 **Publish Directory**: `dist`
+- 🌐 **Domains**: healthhub.theespeys.com (primary), espeyhealthhub.netlify.app
+- 🔥 **Functions**: Firebase Cloud Functions in us-south1 (Dallas)
 
-## How can I deploy this project?
+## App Pages / Routes
+- 📊 **Dashboard** (`/`): Draggable grid with all six health panels and resizable cards
+- 🎯 **Goals** (`/goals`): Long-term weight loss plan and 30-day challenges with rich text editing
+- 💪 **Readiness** (`/readiness`): Daily Athlytic scores and 7-day HRV trends
+- 🍎 **Nutrition** (`/nutrition`): Lose It! calories vs targets and macro breakdowns
+- 💧 **Hydration** (`/hydration`): Water intake tracking with daily goals
+- 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry
+- ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns
+- 🏆 **Milestones** (`/milestones`): Weight loss goals with reward popup cards
+- ⚙️ **Admin** (`/admin`): Layout presets, navigation management, backup/restore system
 
-Simply open [Lovable](https://lovable.dev/projects/fde0a9c9-ce7d-4231-b821-82c3a88c41f0) and click on Share -> Publish.
+## Directory Map
+```
+HealthHub/
+├── src/
+│   ├── components/
+│   │   ├── dashboard/       # Six health panels + draggable grid system
+│   │   ├── layout/          # Sidebar, header, mobile nav with theme toggle
+│   │   ├── admin/           # Admin panel, backup manager, Apple Health test
+│   │   ├── auth/            # Firebase Google sign-in
+│   │   └── ui/              # shadcn/ui components + rich text editor
+│   ├── contexts/            # Auth, Layout, Navigation, Sidebar contexts
+│   ├── services/            # API services for health apps integration
+│   ├── hooks/               # SWR data hooks and custom utilities
+│   └── utils/               # Panel helpers and page info utilities
+├── functions/src/           # Firebase Cloud Functions for automation
+├── docs/                    # Project documentation and guides
+└── firebase.json           # Firebase configuration
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Troubleshooting
+- 🔐 **Auth Issues**: Verify Firebase authorized domains include both production URLs
+- 📱 **PWA Install**: Check manifest.json and service worker registration
+- 🔄 **Data Sync**: Monitor Cloud Functions logs for API failures and retry logic
+- 🎨 **Layout Issues**: Use admin panel to reset layouts or restore from backup
+- 📊 **Health Data**: iOS Shortcut setup required for Apple Health integration
+- 💾 **Backup/Restore**: Google Drive integration requires service account setup
+- 🔔 **Notifications**: Firebase Cloud Messaging needs proper permissions and tokens
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## AI Handoff
+Read this README, scan the repo, prioritize core functions and env-safe areas, keep env and rules aligned with this file. Focus on health data integration, drag-and-drop layout system, and automated backup functionality. The rich text editor system uses Tiptap with custom spacing rules.
