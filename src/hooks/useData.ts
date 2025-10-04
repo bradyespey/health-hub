@@ -22,10 +22,15 @@ export function useNutritionData(days: number = 7) {
 }
 
 export function useWeightData(days: number = 30) {
-  return useSWR(`weight-${days}`, () => LoseItService.getWeightData(days), {
-    refreshInterval: 60 * 60 * 1000, // 1 hour
-    revalidateOnFocus: false,
-  });
+  const { user } = useAuth();
+  return useSWR(
+    user ? `weight-${days}-${user.id}` : `weight-${days}`,
+    () => AppleHealthService.getWeightData(days, user?.id),
+    {
+      refreshInterval: 60 * 60 * 1000, // 1 hour
+      revalidateOnFocus: false,
+    }
+  );
 }
 
 export function useHydrationData(days: number = 7) {

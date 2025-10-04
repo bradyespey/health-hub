@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 import { useLayout, CardSize } from '@/contexts/LayoutContext';
 import { LongTermGoalCard } from './LongTermGoalCard';
 import { ChallengeCard } from './ChallengeCard';
+import { Mission185Card } from './Mission185Card';
+import { ScratchOffPrizesCard } from './ScratchOffPrizesCard';
 import { TextCard } from './TextCard';
 import { Button } from '@/components/ui/button';
 import { Square, SquareCheck, SquareCheckBig, Move, Plus, Trash2 } from 'lucide-react';
@@ -186,11 +188,15 @@ function SortableItem({ id, children, size, disabled }: SortableItemProps) {
 
 // Default cards for Goals page
 const defaultGoalsCards = [
-  { id: 'long-term-goal', component: LongTermGoalCard, order: 0, size: 'large' as CardSize },
-  { id: 'challenge', component: ChallengeCard, order: 1, size: 'large' as CardSize },
+  { id: 'mission-185', component: Mission185Card, order: 0, size: 'large' as CardSize },
+  { id: 'scratch-off-prizes', component: ScratchOffPrizesCard, order: 1, size: 'large' as CardSize },
+  { id: 'long-term-goal', component: LongTermGoalCard, order: 2, size: 'large' as CardSize },
+  { id: 'challenge', component: ChallengeCard, order: 3, size: 'large' as CardSize },
 ];
 
 const goalsCardComponents = {
+  'mission-185': Mission185Card,
+  'scratch-off-prizes': ScratchOffPrizesCard,
   'long-term-goal': LongTermGoalCard,
   'challenge': ChallengeCard,
 };
@@ -203,10 +209,13 @@ export function GoalsGrid() {
   // Ensure goals cards exist in the layout system
   React.useEffect(() => {
     if (!loading && layouts.length > 0) {
-      const goalsLayouts = layouts.filter(l => l.id === 'long-term-goal' || l.id === 'challenge');
-      // If goals cards don't exist, add them to the layout
-      if (goalsLayouts.length === 0) {
-        const newLayouts = [...layouts, ...defaultGoalsCards];
+      const goalsLayoutIds = ['mission-185', 'scratch-off-prizes', 'long-term-goal', 'challenge'];
+      const existingGoalsIds = layouts.filter(l => goalsLayoutIds.includes(l.id)).map(l => l.id);
+      const missingCards = defaultGoalsCards.filter(card => !existingGoalsIds.includes(card.id));
+      
+      // Add missing cards to the layout
+      if (missingCards.length > 0) {
+        const newLayouts = [...layouts, ...missingCards];
         updateLayout(newLayouts);
       }
     }
@@ -214,8 +223,9 @@ export function GoalsGrid() {
   
   // Get goals-specific layouts from the main layout system
   const goalsCards = React.useMemo(() => {
+    const goalsLayoutIds = ['mission-185', 'scratch-off-prizes', 'long-term-goal', 'challenge'];
     const goalsLayouts = layouts.filter(layout => 
-      layout.id === 'long-term-goal' || layout.id === 'challenge' || layout.id.startsWith('text-card-')
+      goalsLayoutIds.includes(layout.id) || layout.id.startsWith('text-card-')
     );
     
     // If no layouts found, use defaults
@@ -249,31 +259,33 @@ export function GoalsGrid() {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
-      // Find the current goals cards in the full layouts array
-      const goalsLayouts = layouts.filter(layout => 
-        layout.id === 'long-term-goal' || layout.id === 'challenge'
-      );
+      // Get all goals cards sorted by order
+      const goalsLayoutIds = ['mission-185', 'scratch-off-prizes', 'long-term-goal', 'challenge'];
+      const goalsLayouts = layouts
+        .filter(layout => 
+          goalsLayoutIds.includes(layout.id) || layout.id.startsWith('text-card-')
+        )
+        .sort((a, b) => a.order - b.order);
       
       const oldIndex = goalsLayouts.findIndex((item) => item.id === active.id);
       const newIndex = goalsLayouts.findIndex((item) => item.id === over.id);
       
       if (oldIndex !== -1 && newIndex !== -1) {
-        // Swap the orders of the two cards being reordered
-        const activeCard = goalsLayouts[oldIndex];
-        const overCard = goalsLayouts[newIndex];
+        // Remove active item and insert it at new position
+        const reorderedCards = [...goalsLayouts];
+        const [movedItem] = reorderedCards.splice(oldIndex, 1);
+        reorderedCards.splice(newIndex, 0, movedItem);
         
-        // Update the full layouts array with swapped orders
-        const newLayouts = layouts.map(layout => {
-          if (layout.id === activeCard.id) {
-            return { ...layout, order: overCard.order };
-          }
-          if (layout.id === overCard.id) {
-            return { ...layout, order: activeCard.order };
+        // Update orders sequentially
+        const updatedLayouts = layouts.map(layout => {
+          const cardIndex = reorderedCards.findIndex(card => card.id === layout.id);
+          if (cardIndex !== -1) {
+            return { ...layout, order: cardIndex };
           }
           return layout;
         });
         
-        updateLayout(newLayouts);
+        updateLayout(updatedLayouts);
       }
     }
   };

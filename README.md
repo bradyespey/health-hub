@@ -68,9 +68,10 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 
 ### Data Pipeline Automation
 - ⏰ **Cloud Functions**: Cron every 2h fetches Athlytic, Lose It!, Habitify data
-- 📱 **iOS Shortcut**: Exports Apple Health JSON via HTTPS POST to Firebase Function
+- 📱 **iOS Shortcut**: Exports Apple Health JSON (weight, hydration, HRV, workouts) via HTTPS POST to Firebase Function
 - 🔔 **Push Notifications**: 8 PM reminders for incomplete habits (Firebase Cloud Messaging)
 - 🔄 **Sync Status**: Monitoring with failure alerts and manual retry options
+- ⚖️ **Weight Tracking**: Apple Health BodyMass data synced to Firestore for Mission 185 progress visualization
 
 ## Deploy
 - 🚀 **Frontend**: Automatic via GitHub integration to Netlify
@@ -81,7 +82,7 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 
 ## App Pages / Routes
 - 📊 **Dashboard** (`/`): Draggable grid with all six health panels and resizable cards
-- 🎯 **Goals** (`/goals`): Long-term weight loss plan and 30-day challenges with rich text editing
+- 🎯 **Goals** (`/goals`): Mission 185 weight tracker with line graph, scratch-off prize logging, long-term plans, and 30-day challenges
 - 💪 **Readiness** (`/readiness`): Daily Athlytic scores and 7-day HRV trends
 - 🍎 **Nutrition** (`/nutrition`): Lose It! calories vs targets and macro breakdowns
 - 💧 **Hydration** (`/hydration`): Water intake tracking with daily goals

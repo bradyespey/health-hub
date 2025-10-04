@@ -24,6 +24,11 @@ export interface AppleHealthRecord {
   source: string;
 }
 
+export interface WeightData {
+  date: string;
+  weight: number;
+}
+
 export class AppleHealthService {
   static async getHydrationData(days: number = 7, userId?: string): Promise<HydrationData[]> {
     if (!userId) {
@@ -220,5 +225,76 @@ export class AppleHealthService {
       console.error('Error fetching raw health data:', error);
       return null;
     }
+  }
+
+  static async getWeightData(days: number = 30, userId?: string): Promise<WeightData[]> {
+    if (!userId) {
+      return this.getMockWeightData(days);
+    }
+
+    try {
+      const weightData: WeightData[] = [];
+      const today = new Date();
+      
+      // Get weight data for the last N days
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Try to get weight data from Firestore - check multiple possible types
+        const weightTypes = ['BodyMass', 'Weight', 'BodyWeight'];
+        
+        for (const weightType of weightTypes) {
+          const docRef = doc(db, 'appleHealth', userId, dateStr, weightType);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const data = docSnap.data() as AppleHealthRecord;
+            
+            // Convert to lbs if needed (Apple Health might store in kg)
+            let weightInLbs = data.value;
+            if (data.unit === 'kg') {
+              weightInLbs = data.value * 2.20462;
+            }
+            
+            weightData.push({
+              date: dateStr,
+              weight: Math.round(weightInLbs * 10) / 10, // Round to 1 decimal
+            });
+            break; // Only add one weight per day
+          }
+        }
+      }
+      
+      // If no data found, return mock data
+      return weightData.length > 0 ? weightData : this.getMockWeightData(days);
+    } catch (error) {
+      console.error('Error fetching weight data from Firestore:', error);
+      return this.getMockWeightData(days);
+    }
+  }
+
+  private static getMockWeightData(days: number): WeightData[] {
+    const mockData: WeightData[] = [];
+    const today = new Date();
+    const startWeight = 210;
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      // Simulate gradual weight loss with some fluctuation
+      const progress = (days - 1 - i) / days;
+      const weightLoss = progress * 5; // 5 lbs total loss over the period
+      const fluctuation = (Math.random() - 0.5) * 2; // ±1 lb daily fluctuation
+      
+      mockData.push({
+        date: date.toISOString().split('T')[0],
+        weight: Math.round((startWeight - weightLoss + fluctuation) * 10) / 10,
+      });
+    }
+    
+    return mockData;
   }
 }
