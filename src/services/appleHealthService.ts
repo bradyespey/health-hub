@@ -48,16 +48,10 @@ export class AppleHealthService {
       const hydrationData: HydrationData[] = [];
       const today = new Date();
       
-      // Get data for the last N days, starting from Monday of current week
-      const todayDayOfWeek = today.getDay(); // 0=Sun, 1=Mon, etc
-      const mondayOffset = todayDayOfWeek === 0 ? -6 : 1 - todayDayOfWeek;
-      const mondayDate = new Date(today);
-      mondayDate.setDate(today.getDate() + mondayOffset);
-      
-      // Generate 7 days starting from Monday
+      // Generate days going back from today
       for (let i = 0; i < days; i++) {
-        const date = new Date(mondayDate);
-        date.setDate(mondayDate.getDate() + i);
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
         // Try to get hydration data from Firestore
@@ -82,13 +76,6 @@ export class AppleHealthService {
           waterOunces: waterOunces,
           goalOunces: 120,
         });
-        
-        // Debug logging for water data
-        if (waterOunces > 0) {
-          console.log(`Found water data for ${dateStr}: ${waterOunces} oz`);
-        } else {
-          console.log(`No water data found for ${dateStr} - checked: ${waterTypes.join(', ')}`);
-        }
       }
       
       return hydrationData;

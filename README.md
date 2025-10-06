@@ -71,7 +71,7 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🔄 **Sync Status**: Monitoring with failure alerts and manual retry options
 - ⚖️ **Weight Tracking**: Apple Health BodyMass data synced to Firestore for Mission 185 progress visualization
 - 🍎 **Nutrition Tracking**: Apple Health dietary calories with day-by-day navigation and macro percentages
-- 💧 **Hydration Monitoring**: Apple Health water intake with weekly progress tracking
+- 💧 **Hydration Monitoring**: Apple Health water intake with week-by-week navigation and date range display
 - 🏃 **Training Load**: Apple Health exercise time and active calories with calendar view
 - 🔍 **Raw Data Verification**: Admin panel displays raw Apple Health data with filtering and formatting
 
@@ -87,7 +87,7 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🎯 **Goals** (`/goals`): Mission 185 weight tracker with line graph, scratch-off prize logging, long-term plans, and 30-day challenges
 - 💪 **Readiness** (`/readiness`): Apple Health HRV trends and recovery metrics
 - 🍎 **Nutrition** (`/nutrition`): Apple Health calories and macro tracking
-- 💧 **Hydration** (`/hydration`): Water intake tracking with daily goals
+- 💧 **Hydration** (`/hydration`): Water intake tracking with week-by-week navigation and date ranges
 - 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry
 - ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns
 - 🏆 **Milestones** (`/milestones`): Weight loss goals with reward popup cards
