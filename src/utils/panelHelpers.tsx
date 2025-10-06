@@ -93,7 +93,7 @@ export function isTextCard(cardId: string): boolean {
   
   // Check configuration for other cards
   const config = defaultPanelConfigs[cardId];
-  return config?.type === 'text' ?? false;
+  return config?.type === 'text' || false;
 }
 
 /**

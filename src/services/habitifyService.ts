@@ -187,10 +187,8 @@ export class HabitifyService {
         );
         
         // Check journal for completion status
-          allJournalIds: journalCompletions.map(e => e.habit_id || e.habitId || e.id)
-        });
-          
-                  if (journalEntry) {
+        
+        if (journalEntry) {
           // Found real account data! Use this instead of actions
           // Check completion based on progress: current_value >= target_value
           const progress = journalEntry.progress;
