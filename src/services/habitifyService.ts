@@ -643,5 +643,3 @@ export class HabitifyService {
     }
   }
 }
-  }
-}
