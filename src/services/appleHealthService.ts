@@ -86,6 +86,8 @@ export class AppleHealthService {
         // Debug logging for water data
         if (waterOunces > 0) {
           console.log(`Found water data for ${dateStr}: ${waterOunces} oz`);
+        } else {
+          console.log(`No water data found for ${dateStr} - checked: ${waterTypes.join(', ')}`);
         }
       }
       
