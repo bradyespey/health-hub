@@ -205,6 +205,23 @@ interface SinglePanelGridProps {
 export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
   const { layouts, isEditMode, updateLayout, loading } = useLayout();
   
+  // Get all cards that should show on this page (main panel + any text cards)
+  // MUST be before any conditional returns to follow Rules of Hooks
+  const pageLayouts = React.useMemo(() => {
+    // Find the main panel and any text cards
+    const mainPanel = layouts.find(layout => layout.id === panelId);
+    const textCards = layouts.filter(layout => layout.id.startsWith('text-card-'));
+    
+    // Combine main panel and text cards
+    const allCards = [];
+    if (mainPanel) {
+      allCards.push(mainPanel);
+    }
+    allCards.push(...textCards);
+    
+    return allCards.sort((a, b) => a.order - b.order);
+  }, [layouts, panelId]);
+  
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -238,7 +255,6 @@ export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
     }
   };
 
-
   if (loading) {
     return (
       <div className="p-6">
@@ -248,22 +264,6 @@ export function SinglePanelGrid({ panelId }: SinglePanelGridProps) {
       </div>
     );
   }
-
-  // Get all cards that should show on this page (main panel + any text cards)
-  const pageLayouts = React.useMemo(() => {
-    // Find the main panel and any text cards
-    const mainPanel = layouts.find(layout => layout.id === panelId);
-    const textCards = layouts.filter(layout => layout.id.startsWith('text-card-'));
-    
-    // Combine main panel and text cards
-    const allCards = [];
-    if (mainPanel) {
-      allCards.push(mainPanel);
-    }
-    allCards.push(...textCards);
-    
-    return allCards.sort((a, b) => a.order - b.order);
-  }, [layouts, panelId]);
 
   const PanelComponent = panelComponents[panelId as keyof typeof panelComponents];
   if (!PanelComponent && !pageLayouts.find(l => l.id === panelId)) {

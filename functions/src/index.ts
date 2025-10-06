@@ -110,9 +110,13 @@ export const backupToGoogleDrive = functions.https.onRequest(async (req, res) =>
 });
 
 /**
- * HTTP Cloud Function to ingest Apple Health data from iOS Shortcut
+ * HTTP Cloud Function to ingest Apple Health data from Health Auto Export app
+ * Single-user app - userId defaults to 'brady' if not provided
  */
-export const ingestAppleHealth = functions.https.onRequest(async (req, res) => {
+export const ingestAppleHealth = functions.https.onRequest({
+  memory: '512MiB',
+  timeoutSeconds: 120
+}, async (req, res) => {
   return corsHandler(req, res, async () => {
     try {
       // Verify request method
@@ -127,79 +131,140 @@ export const ingestAppleHealth = functions.https.onRequest(async (req, res) => {
         return;
       }
 
-      const { userId, data } = req.body;
+      // Extract userId - default to 'brady' for single-user app
+      const userId = req.body.userId || req.query.userId || req.headers['x-user-id'] || 'brady';
+      
+      // Support both simple array format and Health Auto Export format
+      let dataToProcess = [];
+      
+      if (req.body.data && Array.isArray(req.body.data)) {
+        // Simple format: { data: [{ type, date, value, unit }] }
+        dataToProcess = req.body.data;
+      } else if (req.body.data && req.body.data.metrics) {
+        // Health Auto Export format: { data: { metrics: [...], workouts: [...] } }
+        // Convert metrics to simple format
+        for (const metric of req.body.data.metrics) {
+          const metricName = metric.name;
+          const units = metric.units || '';
+          
+          if (metric.data && Array.isArray(metric.data)) {
+            for (const dataPoint of metric.data) {
+              // Some metrics have qty, others have Avg/Min/Max
+              const value = dataPoint.qty !== undefined ? dataPoint.qty : dataPoint.Avg;
+              
+              if (value !== undefined) {
+                const recordData: Record<string, unknown> = {
+                  type: metricName,
+                  date: dataPoint.date,
+                  value: value,
+                  unit: units,
+                  source: dataPoint.source || 'health-auto-export'
+                };
+                
+                // Include Min/Max if available (for heart rate, etc.)
+                if (dataPoint.Min !== undefined) recordData.min = dataPoint.Min;
+                if (dataPoint.Max !== undefined) recordData.max = dataPoint.Max;
+                
+                dataToProcess.push(recordData);
+              }
+            }
+          }
+        }
+      }
 
-      if (!userId || !data || !Array.isArray(data)) {
+      if (dataToProcess.length === 0) {
         res.status(400).json({
-          error: 'Invalid payload. Expected: { userId: string, data: Array<{ type: string, date: string, value: number, unit?: string }> }'
+          error: 'No data found. Expected Health Auto Export format or simple array format.',
+          hint: 'Send { data: { metrics: [...] } } from Health Auto Export or { data: [{ type, date, value, unit }] }'
         });
         return;
       }
 
-      console.log(`Received Apple Health data for user: ${userId}, records: ${data.length}`);
+      console.log(`Received Apple Health data for user: ${userId}, records: ${dataToProcess.length}`);
 
       // Get Firestore instance
       const db = admin.firestore();
       
-      // Process each health record
-      const batch = db.batch();
+      // Process records in batches of 450 (Firestore limit is 500)
+      const BATCH_SIZE = 450;
       const processedDates = new Set<string>();
+      let processedCount = 0;
 
-      for (const record of data) {
-        const { type, date, value, unit } = record;
+      for (let i = 0; i < dataToProcess.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const batchRecords = dataToProcess.slice(i, i + BATCH_SIZE);
 
-        // Validate record structure
-        if (!type || !date || value === undefined) {
-          console.warn('Skipping invalid record:', record);
-          continue;
+        for (const record of batchRecords) {
+          const { type, date, value, unit, source, min, max } = record as {
+            type: string;
+            date: string;
+            value: number;
+            unit?: string;
+            source?: string;
+            min?: number;
+            max?: number;
+          };
+
+          // Validate record structure
+          if (!type || !date || value === undefined) {
+            console.warn('Skipping invalid record:', record);
+            continue;
+          }
+
+          // Ensure date is in YYYY-MM-DD format
+          const dateStr = new Date(date).toISOString().split('T')[0];
+          
+          // Create document path: appleHealth/{userId}/{date}/{type}
+          const docRef = db
+            .collection('appleHealth')
+            .doc(userId)
+            .collection(dateStr)
+            .doc(type);
+
+          // Prepare data for storage
+          const healthData: Record<string, unknown> = {
+            type,
+            date: dateStr,
+            value,
+            unit: unit || '',
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            source: source || 'health-auto-export'
+          };
+          
+          // Include min/max if available
+          if (min !== undefined) healthData.min = min;
+          if (max !== undefined) healthData.max = max;
+
+          batch.set(docRef, healthData, { merge: true });
+          processedDates.add(dateStr);
+          processedCount++;
         }
 
-        // Ensure date is in YYYY-MM-DD format
-        const dateStr = new Date(date).toISOString().split('T')[0];
-        
-        // Create document path: appleHealth/{userId}/{date}/{type}
-        const docRef = db
-          .collection('appleHealth')
-          .doc(userId)
-          .collection(dateStr)
-          .doc(type);
-
-        // Prepare data for storage
-        const healthData = {
-          type,
-          date: dateStr,
-          value,
-          unit: unit || '',
-          timestamp: admin.firestore.FieldValue.serverTimestamp(),
-          source: 'ios-shortcut'
-        };
-
-        batch.set(docRef, healthData, { merge: true });
-        processedDates.add(dateStr);
+        // Commit this batch
+        await batch.commit();
+        console.log(`Committed batch ${Math.floor(i / BATCH_SIZE) + 1}, processed ${batchRecords.length} records`);
       }
 
-      // Also update a "latest" document for quick access
+      // Update summary in a separate transaction
       const latestRef = db
         .collection('appleHealth')
         .doc(userId)
         .collection('latest')
         .doc('summary');
 
-      batch.set(latestRef, {
+      await latestRef.set({
         lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-        recordCount: data.length,
+        recordCount: processedCount,
         datesUpdated: Array.from(processedDates)
       }, { merge: true });
 
-      // Commit the batch
-      await batch.commit();
-
-      console.log(`Successfully processed ${data.length} Apple Health records for ${processedDates.size} dates`);
+      console.log(`Successfully processed ${processedCount} Apple Health records for ${processedDates.size} dates`);
 
       res.status(200).json({
         success: true,
-        message: `Processed ${data.length} records for ${processedDates.size} dates`,
-        processedDates: Array.from(processedDates)
+        message: `Processed ${processedCount} records for ${processedDates.size} dates`,
+        processedDates: Array.from(processedDates),
+        userId: userId
       });
 
     } catch (error) {

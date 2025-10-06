@@ -1,17 +1,28 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Apple, Target, TrendingDown } from 'lucide-react';
+import { Apple, Target, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { SampleBadge } from '@/components/ui/sample-badge';
+import { Button } from '@/components/ui/button';
+// Sample badge removed - using real data
 import { useNutritionData, useWeightData } from '@/hooks/useData';
-import { LoseItService } from '@/services/loseItService';
+import { AppleHealthService } from '@/services/appleHealthService';
 
 export function NutritionPanel() {
   const { data: nutritionData, isLoading: nutritionLoading } = useNutritionData(7);
   const { data: weightData, isLoading: weightLoading } = useWeightData(30);
-  const lastUpdated = LoseItService.getLastUpdated();
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0); // 0 = today, 1 = yesterday, etc.
+
+  useEffect(() => {
+    const fetchLastUpdated = async () => {
+      const updated = await AppleHealthService.getLastUpdated('brady');
+      setLastUpdated(updated);
+    };
+    fetchLastUpdated();
+  }, []);
 
   if (nutritionLoading || weightLoading) {
     return (
@@ -48,13 +59,16 @@ export function NutritionPanel() {
     );
   }
 
-  const today = nutritionData[nutritionData.length - 1];
-  const calorieProgress = (today.calories / today.calorieTarget) * 100;
+  // nutritionData is ordered newest-first [today, yesterday, etc.]
+  const selectedDay = nutritionData[selectedDayIndex];
+  const selectedDate = new Date(selectedDay.date + 'T12:00:00');
+  const isToday = selectedDayIndex === 0;
+  const calorieProgress = (selectedDay.calories / selectedDay.calorieTarget) * 100;
   
   const macroData = [
-    { name: 'Protein', value: today.protein * 4, color: 'hsl(var(--accent))' },
-    { name: 'Carbs', value: today.carbs * 4, color: 'hsl(210, 40%, 70%)' },
-    { name: 'Fat', value: today.fat * 9, color: 'hsl(210, 40%, 50%)' },
+    { name: 'Protein', value: selectedDay.protein * 4, color: 'hsl(var(--accent))' },
+    { name: 'Carbs', value: selectedDay.carbs * 4, color: 'hsl(210, 40%, 70%)' },
+    { name: 'Fat', value: selectedDay.fat * 9, color: 'hsl(210, 40%, 50%)' },
   ];
 
   const currentWeight = weightData[weightData.length - 1]?.weight || 0;
@@ -75,7 +89,29 @@ export function NutritionPanel() {
               Nutrition
             </CardTitle>
             <div className="flex items-center gap-2">
-              <SampleBadge />
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedDayIndex(Math.min(selectedDayIndex + 1, nutritionData.length - 1))}
+                  disabled={selectedDayIndex >= nutritionData.length - 1}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Badge variant="outline" className="text-xs min-w-[80px] text-center">
+                  {isToday ? 'Today' : selectedDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedDayIndex(Math.max(selectedDayIndex - 1, 0))}
+                  disabled={selectedDayIndex === 0}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>
@@ -91,10 +127,10 @@ export function NutritionPanel() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium">Calories Today</span>
+                <span className="text-sm font-medium">{isToday ? 'Calories Today' : 'Calories'}</span>
               </div>
               <span className="text-sm text-muted-foreground">
-                {today.calories} / {today.calorieTarget} kcal
+                {selectedDay.calories} / {selectedDay.calorieTarget} kcal
               </span>
             </div>
             <Progress value={calorieProgress} className="h-2" />
@@ -106,7 +142,7 @@ export function NutritionPanel() {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Macro Breakdown */}
             <div>
-              <h4 className="text-sm font-medium mb-3">Today's Macros</h4>
+              <h4 className="text-sm font-medium mb-3">{isToday ? "Today's Macros" : 'Macros'}</h4>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>

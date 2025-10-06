@@ -4,7 +4,7 @@ import { Dumbbell, Calendar, Flame, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { SampleBadge } from '@/components/ui/sample-badge';
+// Sample badge removed - using real Apple Health data
 import { useWorkoutData } from '@/hooks/useData';
 import { AppleHealthService } from '@/services/appleHealthService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +16,8 @@ export function TrainingPanel() {
 
   useEffect(() => {
     const fetchLastUpdated = async () => {
-      const updated = await AppleHealthService.getLastUpdated(user?.id);
+      // Single-user app: data stored under 'brady' userId
+      const updated = await AppleHealthService.getLastUpdated('brady');
       setLastUpdated(updated);
     };
     
@@ -24,6 +25,8 @@ export function TrainingPanel() {
       fetchLastUpdated();
     }
   }, [user]);
+
+  // Debug logging
 
   if (isLoading) {
     return (
@@ -60,25 +63,38 @@ export function TrainingPanel() {
     );
   }
 
-  // Generate calendar data for the last 30 days
+  // Generate calendar data for the last 30 days with Monday as first day
   const generateCalendarData = () => {
     const days = [];
     const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     
+    // Generate last 30 days
     for (let i = 29; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const workout = workoutData.find(w => w.date === dateStr);
+      const workout = workoutData?.find(w => w.date === dateStr);
       days.push({
         date: dateStr,
+        dayOfWeek: date.getDay(), // 0=Sun, 1=Mon, etc
         workout,
-        isToday: dateStr === today.toISOString().split('T')[0],
+        isToday: dateStr === todayStr,
       });
     }
     
-    return days;
+    // Add empty cells at start to align first day with Monday (Monday=0)
+    const firstDay = days[0];
+    const firstDayOfWeek = firstDay.dayOfWeek === 0 ? 6 : firstDay.dayOfWeek - 1; // Convert to Mon=0, Sun=6
+    const paddingCells = Array.from({ length: firstDayOfWeek }, (_, i) => ({
+      date: '',
+      workout: null,
+      isToday: false,
+      isEmpty: true
+    }));
+    
+    return [...paddingCells, ...days];
   };
 
   const calendarData = generateCalendarData();
@@ -117,7 +133,6 @@ export function TrainingPanel() {
               Training Load
             </CardTitle>
             <div className="flex items-center gap-2">
-              <SampleBadge />
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>
@@ -167,56 +182,62 @@ export function TrainingPanel() {
             <h4 className="text-sm font-medium mb-3">30-Day Activity Calendar</h4>
             <TooltipProvider>
               <div className="grid grid-cols-7 gap-1">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                   <div key={day} className="text-xs text-muted-foreground text-center p-1">
                     {day}
                   </div>
                 ))}
                 
-                {calendarData.map((day, index) => (
-                  <Tooltip key={index}>
-                    <TooltipTrigger>
-                      <div
-                        className={`
-                          aspect-square rounded-sm border border-border/50 relative
-                          ${day.workout 
-                            ? `${getIntensityColor(day.workout.calories)} ${getIntensityOpacity(day.workout.calories)}` 
-                            : 'bg-muted/30'
-                          }
-                          ${day.isToday ? 'ring-2 ring-accent' : ''}
-                          hover:ring-1 hover:ring-accent/50 transition-all
-                        `}
-                      >
-                        {day.workout && (
+                {calendarData.map((day, index) => {
+                  // Skip empty padding cells
+                  if ((day as any).isEmpty) {
+                    return <div key={`empty-${index}`} className="aspect-square" />;
+                  }
+                  
+                  return (
+                    <Tooltip key={index}>
+                      <TooltipTrigger>
+                        <div
+                          className={`
+                            aspect-square rounded-sm border border-border/50 relative
+                            ${day.workout 
+                              ? `${getIntensityColor(day.workout.calories)} ${getIntensityOpacity(day.workout.calories)}` 
+                              : 'bg-muted/30'
+                            }
+                            ${day.isToday ? 'ring-2 ring-accent' : ''}
+                            hover:ring-1 hover:ring-accent/50 transition-all
+                          `}
+                        >
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-xs font-medium text-white mix-blend-difference">
-                              {Math.floor(day.workout.calories / 100)}
+                              {day.date ? new Date(day.date).getDate() : ''}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {new Date(day.date).toLocaleDateString([], { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          })}
                         </div>
-                        {day.workout ? (
-                          <div className="space-y-1 text-xs">
-                            <div>{day.workout.type}</div>
-                            <div>{day.workout.duration} min • {day.workout.calories} cal</div>
-                            {day.workout.rpe && <div>RPE: {day.workout.rpe}/10</div>}
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-center">
+                          <div className="font-medium">
+                            {day.date ? new Date(day.date).toLocaleDateString([], { 
+                              weekday: 'short',
+                              month: 'short', 
+                              day: 'numeric' 
+                            }) : ''}
                           </div>
-                        ) : (
-                          <div className="text-xs text-muted-foreground">Rest day</div>
-                        )}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
+                          {day.workout ? (
+                            <div className="space-y-1 text-xs">
+                              <div>{day.workout.type}</div>
+                              <div>{day.workout.duration} min • {day.workout.calories} cal</div>
+                              {day.workout.rpe && <div>RPE: {day.workout.rpe}/10</div>}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-muted-foreground">Rest day</div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
             </TooltipProvider>
             

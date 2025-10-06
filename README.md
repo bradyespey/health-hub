@@ -42,8 +42,6 @@ VITE_FIREBASE_APP_ID=YOUR_APP_ID
 
 # Health App API Keys
 VITE_HABITIFY_API_KEY=YOUR_HABITIFY_KEY
-VITE_LOSE_IT_API_KEY=YOUR_LOSE_IT_KEY
-VITE_ATHLYTIC_API_KEY=YOUR_ATHLYTIC_KEY
 
 # Google Drive Backup (Cloud Functions)
 GOOGLE_PROJECT_ID=YOUR_PROJECT_ID
@@ -67,11 +65,14 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 📦 **Backup**: Manual and automated Google Drive backups via admin panel
 
 ### Data Pipeline Automation
-- ⏰ **Cloud Functions**: Cron every 2h fetches Athlytic, Lose It!, Habitify data
-- 📱 **iOS Shortcut**: Exports Apple Health JSON (weight, hydration, HRV, workouts) via HTTPS POST to Firebase Function
+- ⏰ **Cloud Functions**: Cron every 2h fetches Habitify data
+- 📱 **Health Auto Export**: Automated Apple Health exports (weight, hydration, HRV, workouts, nutrition, readiness) via REST API to Firebase Function
 - 🔔 **Push Notifications**: 8 PM reminders for incomplete habits (Firebase Cloud Messaging)
 - 🔄 **Sync Status**: Monitoring with failure alerts and manual retry options
 - ⚖️ **Weight Tracking**: Apple Health BodyMass data synced to Firestore for Mission 185 progress visualization
+- 🍎 **Nutrition Tracking**: Apple Health dietary calories with day-by-day navigation
+- 💧 **Hydration Monitoring**: Apple Health water intake with weekly progress tracking
+- 🏃 **Training Load**: Apple Health exercise time and active calories with calendar view
 
 ## Deploy
 - 🚀 **Frontend**: Automatic via GitHub integration to Netlify
@@ -83,8 +84,8 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 ## App Pages / Routes
 - 📊 **Dashboard** (`/`): Draggable grid with all six health panels and resizable cards
 - 🎯 **Goals** (`/goals`): Mission 185 weight tracker with line graph, scratch-off prize logging, long-term plans, and 30-day challenges
-- 💪 **Readiness** (`/readiness`): Daily Athlytic scores and 7-day HRV trends
-- 🍎 **Nutrition** (`/nutrition`): Lose It! calories vs targets and macro breakdowns
+- 💪 **Readiness** (`/readiness`): Apple Health HRV trends and recovery metrics
+- 🍎 **Nutrition** (`/nutrition`): Apple Health calories and macro tracking
 - 💧 **Hydration** (`/hydration`): Water intake tracking with daily goals
 - 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry
 - ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns
@@ -102,7 +103,7 @@ HealthHub/
 │   │   ├── auth/            # Firebase Google sign-in
 │   │   └── ui/              # shadcn/ui components + rich text editor
 │   ├── contexts/            # Auth, Layout, Navigation, Sidebar contexts
-│   ├── services/            # API services for health apps integration
+│   ├── services/            # Apple Health and Habitify API services
 │   ├── hooks/               # SWR data hooks and custom utilities
 │   └── utils/               # Panel helpers and page info utilities
 ├── functions/src/           # Firebase Cloud Functions for automation
@@ -115,7 +116,8 @@ HealthHub/
 - 📱 **PWA Install**: Check manifest.json and service worker registration
 - 🔄 **Data Sync**: Monitor Cloud Functions logs for API failures and retry logic
 - 🎨 **Layout Issues**: Use admin panel to reset layouts or restore from backup
-- 📊 **Health Data**: iOS Shortcut setup required for Apple Health integration
+- 📊 **Health Data**: Health Auto Export app required for Apple Health integration (see docs/Apple Health Setup Guide.md)
+- 🗂️ **Data Sources**: Apple Health is the primary source for nutrition, hydration, training, and weight data (Lose It! and Athlytic APIs unavailable)
 - 💾 **Backup/Restore**: Google Drive integration requires service account setup
 - 🔔 **Notifications**: Firebase Cloud Messaging needs proper permissions and tokens
 

@@ -4,7 +4,7 @@ import { Droplets, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { SampleBadge } from '@/components/ui/sample-badge';
+// Sample badge removed - using real Apple Health data
 import { useTodayHydration, useHydrationData } from '@/hooks/useData';
 import { AppleHealthService } from '@/services/appleHealthService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,9 +15,11 @@ export function HydrationPanel() {
   const { data: weekData, isLoading: weekLoading } = useHydrationData(7);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
+
   useEffect(() => {
     const fetchLastUpdated = async () => {
-      const updated = await AppleHealthService.getLastUpdated(user?.id);
+      // Single-user app: data stored under 'brady' userId
+      const updated = await AppleHealthService.getLastUpdated('brady');
       setLastUpdated(updated);
     };
     
@@ -96,7 +98,6 @@ export function HydrationPanel() {
               Hydration
             </CardTitle>
             <div className="flex items-center gap-2">
-              <SampleBadge />
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>
@@ -175,18 +176,19 @@ export function HydrationPanel() {
               </div>
             </div>
 
-            {/* Daily Progress Bars */}
+            {/* Daily Progress Bars - Start with Monday */}
             <div className="space-y-2">
               {weekData.map((day, index) => {
                 const percentage = (day.waterOunces / day.goalOunces) * 100;
-                const dayName = new Date(day.date).toLocaleDateString([], { weekday: 'short' });
+                // Parse date in local timezone by adding time component
+                const dayName = new Date(day.date + 'T12:00:00').toLocaleDateString([], { weekday: 'short' });
                 
                 return (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-8 text-xs text-muted-foreground">{dayName}</div>
                     <div className="flex-1">
                       <Progress 
-                        value={percentage} 
+                        value={Math.min(percentage, 200)} 
                         className="h-2"
                       />
                     </div>

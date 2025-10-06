@@ -15,17 +15,24 @@ export function useReadinessData(days: number = 7) {
 }
 
 export function useNutritionData(days: number = 7) {
-  return useSWR(`nutrition-${days}`, () => LoseItService.getNutritionData(days), {
-    refreshInterval: 30 * 60 * 1000, // 30 minutes
-    revalidateOnFocus: false,
-  });
+  const { user } = useAuth();
+  // Single-user app: data stored under 'brady' userId
+  return useSWR(
+    user ? `nutrition-${days}-brady` : null,
+    () => AppleHealthService.getNutritionData(days, 'brady'),
+    {
+      refreshInterval: 30 * 60 * 1000, // 30 minutes
+      revalidateOnFocus: false,
+    }
+  );
 }
 
 export function useWeightData(days: number = 30) {
   const { user } = useAuth();
+  // Single-user app: data stored under 'brady' userId
   return useSWR(
-    user ? `weight-${days}-${user.id}` : `weight-${days}`,
-    () => AppleHealthService.getWeightData(days, user?.id),
+    user ? `weight-${days}-brady` : null,
+    () => AppleHealthService.getWeightData(days, 'brady'),
     {
       refreshInterval: 60 * 60 * 1000, // 1 hour
       revalidateOnFocus: false,
@@ -35,9 +42,10 @@ export function useWeightData(days: number = 30) {
 
 export function useHydrationData(days: number = 7) {
   const { user } = useAuth();
+  // Single-user app: data stored under 'brady' userId
   return useSWR(
-    user ? `hydration-${days}-${user.id}` : null,
-    () => AppleHealthService.getHydrationData(days, user?.id),
+    user ? `hydration-${days}-brady` : null,
+    () => AppleHealthService.getHydrationData(days, 'brady'),
     {
       refreshInterval: 15 * 60 * 1000, // 15 minutes
       revalidateOnFocus: false,
@@ -47,9 +55,10 @@ export function useHydrationData(days: number = 7) {
 
 export function useWorkoutData(days: number = 30) {
   const { user } = useAuth();
+  // Single-user app: data stored under 'brady' userId
   return useSWR(
-    user ? `workouts-${days}-${user.id}` : null,
-    () => AppleHealthService.getWorkoutData(days, user?.id),
+    user ? `workouts-${days}-brady` : null,
+    () => AppleHealthService.getWorkoutData(days, 'brady'),
     {
       refreshInterval: 60 * 60 * 1000, // 1 hour
       revalidateOnFocus: false,
@@ -68,9 +77,10 @@ export function useHabits() {
 
 export function useTodayHydration() {
   const { user } = useAuth();
+  // Single-user app: data stored under 'brady' userId
   return useSWR(
-    user ? `today-hydration-${user.id}` : null,
-    () => AppleHealthService.getTodayHydration(user?.id),
+    user ? `today-hydration-brady` : null,
+    () => AppleHealthService.getTodayHydration('brady'),
     {
       refreshInterval: 5 * 60 * 1000, // 5 minutes
       revalidateOnFocus: true,

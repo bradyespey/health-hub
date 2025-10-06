@@ -73,7 +73,7 @@ export class HabitifyService {
 
   private static async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     if (!this.API_KEY) {
-      console.warn('Habitify API key not found, using mock data');
+      console.warn('Habitify API key not found, returning empty data');
       throw new Error('Habitify API key not configured');
     }
 
@@ -153,36 +153,25 @@ export class HabitifyService {
           const yesterday = new Date(now);
           yesterday.setDate(yesterday.getDate() - 1);
           const yesterdayStr = `${yesterday.getFullYear()}-${(yesterday.getMonth() + 1).toString().padStart(2, '0')}-${yesterday.getDate().toString().padStart(2, '0')}T00:00:00${offset}`;
-          console.log(`📅 Trying yesterday: ${yesterdayStr}`);
           
           try {
             const journalResponseYesterday = await this.makeRequest<HabitifyResponse<any[]>>(`/journal?target_date=${yesterdayStr}`);
             if (journalResponseYesterday.status && journalResponseYesterday.data && journalResponseYesterday.data.length > 0) {
-              console.log(`📆 Yesterday query returned ${journalResponseYesterday.data.length} entries!`);
               const yesterdayMeditate = journalResponseYesterday.data.find((entry: any) => 
                 entry.name === 'Meditate' || entry.id === 'CEFD5042-5541-4F5F-A404-0354C2172B04'
               );
-              if (yesterdayMeditate) {
-                console.log(`🧘 Yesterday Meditate progress:`, JSON.stringify(yesterdayMeditate.progress, null, 2));
-              }
             }
           } catch (error) {
-            console.log(`ℹ️ Yesterday query failed, continuing...`);
+            // Continue without yesterday data
           }
         if (journalResponse.status && journalResponse.data) {
           journalCompletions = journalResponse.data;
-          console.log(`🎯 SUCCESS! Found ${journalCompletions.length} real account completions from Journal!`);
-          console.log('📋 Journal data structure:', journalCompletions);
-          
-                                // Log simplified journal data
-          console.log(`📋 Journal entries found for ${journalCompletions.length} habits`);
         }
       } catch (error) {
         console.warn('❌ Failed to fetch Journal data, falling back to actions only:', error);
       }
 
       // Now get completion status and analytics
-      console.log('✅ Fetching analytics from actions...');
       
       const habitsWithStatus = await Promise.all(
         habitsResponse.data.map(async (habit: HabitifyHabit) => {
@@ -197,9 +186,7 @@ export class HabitifyService {
           entry.id === habit.id
         );
         
-        console.log(`🔍 Looking for ${habit.name} (${habit.id}) in Journal:`, {
-          foundEntry: !!journalEntry,
-          journalEntry: journalEntry,
+        // Check journal for completion status
           allJournalIds: journalCompletions.map(e => e.habit_id || e.habitId || e.id)
         });
           
@@ -212,30 +199,8 @@ export class HabitifyService {
                           progress.target_value !== undefined && 
                           progress.current_value >= progress.target_value;
           
-          console.log(`🎯 REAL DATA for ${habit.name}: completed = ${completedToday} (current: ${progress?.current_value}/${progress?.target_value})`);
-          
-          // SPECIAL DEBUG FOR EMAIL
-          if (habit.name === 'Email') {
-            console.log(`📧 EMAIL DEBUG - Full Journal Entry:`, JSON.stringify(journalEntry, null, 2));
-            console.log(`📧 EMAIL DEBUG - Progress Object:`, JSON.stringify(progress, null, 2));
-            console.log(`📧 EMAIL DEBUG - Updated At:`, journalEntry.updated_at);
-            console.log(`📧 EMAIL DEBUG - Reference Date:`, progress?.reference_date);
-            console.log(`📧 EMAIL DEBUG - Current Time:`, new Date().toISOString());
-            console.log(`📧 EMAIL SYNC STATUS: App shows completed ✅ but API shows current_value: ${progress?.current_value} ❌`);
-          }
-          
-          // Log completed habits for debugging
-          if (completedToday) {
-            console.log(`✅ ${habit.name} completed today (${progress?.current_value}/${progress?.target_value})`);
-          }
+          // Determine completion status
         } else {
-          // SPECIAL DEBUG FOR EMAIL - show what we're missing
-          if (habit.name === 'Email') {
-            console.log(`📧 EMAIL NOT FOUND IN JOURNAL! Available entries:`);
-            journalCompletions.forEach((entry, index) => {
-              console.log(`  ${index + 1}. ${entry.name || 'unnamed'} (habit_id: ${entry.habit_id}, id: ${entry.id})`);
-            });
-          }
         }
 
                          try {
@@ -244,8 +209,6 @@ export class HabitifyService {
                  const actionsResponse = await this.makeRequest<HabitifyResponse<HabitifyAction[]>>(`/actions/${habit.id}?_t=${cacheBuster}`);
 
                  if (actionsResponse.status && actionsResponse.data) {
-                   console.log(`📋 ${habit.name}: Found ${actionsResponse.data.length} total actions`);
-                   
                    // Filter out test actions for clean analytics
                    const realActions = actionsResponse.data.filter((action: any) => 
                      !action.title?.includes('Completed via Health Hub') && 
@@ -255,14 +218,6 @@ export class HabitifyService {
                      action.title !== null &&
                      action.title !== undefined
                    );
-                   
-                   console.log(`📊 ${habit.name}: ${realActions.length} real actions (filtered out ${actionsResponse.data.length - realActions.length} test actions)`);
-                   
-                   if (realActions.length > 0) {
-                     realActions.forEach((action: any, index: number) => {
-                       console.log(`  ${index + 1}. "${action.title}" (${action.status === 1 ? 'completed' : 'pending'})`);
-                     });
-                   }
                    
                    // Calculate analytics from REAL actions only
                    analytics = this.calculateAnalytics(realActions);
@@ -276,9 +231,6 @@ export class HabitifyService {
                 const completedActions = todayActions.filter(action => action.status === 1);
                 completedToday = completedActions.length >= (habit.goal?.times || 1);
                 todayAction = todayActions.length > 0 ? todayActions[todayActions.length - 1] : undefined;
-                console.log(`📊 FALLBACK for ${habit.name}: completed = ${completedToday} (from ${realActions.length} real Actions)`);
-              } else {
-                console.log(`📊 Analytics for ${habit.name}: ${analytics.totalCompletions} completions, ${analytics.currentStreak} day streak (using ${realActions.length} real actions + Journal status)`);
               }
             } else {
               console.warn(`❌ No action data returned for habit ${habit.name}`);
@@ -307,15 +259,15 @@ export class HabitifyService {
       return habitsWithStatus;
       
     } catch (error) {
-      console.error('❌ Error fetching habits from Habitify API, falling back to mock data');
+      console.error('❌ Error fetching habits from Habitify API');
       console.error('Error details:', error);
       
       if (error instanceof Error) {
         console.error('Error message:', error.message);
       }
       
-      // Fallback to mock data
-      return this.getMockHabits();
+      // Return empty array instead of mock data
+      return [];
     }
   }
 
@@ -496,81 +448,9 @@ export class HabitifyService {
       }
     } catch (error) {
       console.error('Error fetching habit logs from Habitify API:', error);
-      // Fallback to mock data
-      return this.getMockHabitLogs(habitId, days);
+      // Return empty array instead of mock data
+      return [];
     }
-  }
-
-  private static getMockHabits(): Habit[] {
-    return [
-      {
-        id: '1',
-        name: 'Log Food',
-        icon: '🍎',
-        streak: 12,
-        completedToday: Math.random() > 0.5,
-        target: 3,
-        frequency: 'daily',
-      },
-      {
-        id: '2',
-        name: 'Drink Water',
-        icon: '💧',
-        streak: 8,
-        completedToday: Math.random() > 0.3,
-        target: 8,
-        frequency: 'daily',
-      },
-      {
-        id: '3',
-        name: 'Exercise',
-        icon: '🏃‍♂️',
-        streak: 5,
-        completedToday: Math.random() > 0.4,
-        target: 5,
-        frequency: 'weekly',
-      },
-      {
-        id: '4',
-        name: 'Meditation',
-        icon: '🧘‍♂️',
-        streak: 15,
-        completedToday: Math.random() > 0.6,
-        target: 1,
-        frequency: 'daily',
-      },
-      {
-        id: '5',
-        name: 'Read',
-        icon: '📚',
-        streak: 3,
-        completedToday: Math.random() > 0.7,
-        target: 1,
-        frequency: 'daily',
-      },
-    ];
-  }
-
-  private static getMockHabitLogs(habitId: string, days: number): HabitLog[] {
-    const logs: HabitLog[] = [];
-    const today = new Date();
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Random completion pattern
-      if (Math.random() > 0.3) {
-        logs.push({
-          habitId,
-          date: date.toISOString().split('T')[0],
-          completed: true,
-          timestamp: date,
-        });
-      }
-    }
-    
-    return logs;
   }
 
   static getLastUpdated(): Date {
@@ -667,7 +547,6 @@ export class HabitifyService {
     }
 
     try {
-      console.log('🧹 Clearing old test actions to get clean analytics...');
       
       // Get habits first
       const habitsResponse = await this.makeRequest<HabitifyResponse<HabitifyHabit[]>>('/habits');
@@ -682,12 +561,6 @@ export class HabitifyService {
         try {
           const actionsResponse = await this.makeRequest<HabitifyResponse<HabitifyAction[]>>(`/actions/${habit.id}`);
           if (actionsResponse.status && actionsResponse.data) {
-            console.log(`📋 ${habit.name}: Found ${actionsResponse.data.length} total actions`);
-            
-            // Log all action titles for debugging
-            actionsResponse.data.forEach((action: any, index: number) => {
-              console.log(`  ${index + 1}. "${action.title}" (${action.status === 1 ? 'completed' : 'pending'})`);
-            });
             
             // Filter actions that were created via API (have our title or look like test data)
             const apiActions = actionsResponse.data.filter((action: any) => 
@@ -698,16 +571,11 @@ export class HabitifyService {
               !action.title
             );
             
-            console.log(`🎯 ${habit.name}: Found ${apiActions.length} API actions to delete`);
-            
             // Delete each API-created action
             for (const action of apiActions) {
               try {
-                console.log(`🗑️ Attempting to DELETE action ${action.id} for ${habit.name}`);
-                const deleteResult = await this.makeRequest(`/actions/${habit.id}/${action.id}`, 'DELETE');
-                console.log(`🗑️ DELETE response:`, deleteResult);
+                await this.makeRequest(`/actions/${habit.id}/${action.id}`, 'DELETE');
                 clearedCount++;
-                console.log(`✅ Successfully deleted action "${action.title}" for ${habit.name}`);
               } catch (error) {
                 console.warn(`❌ Failed to delete action for ${habit.name}:`, error);
               }
@@ -736,7 +604,6 @@ export class HabitifyService {
       const response = await this.makeRequest<HabitifyResponse<any>>('/habits');
       
       if (response.status) {
-        console.log('🔍 TESTING JOURNAL ENDPOINT WITH PROPER DATE FORMAT:');
         
         // Test the journal endpoint with properly formatted date (same format as actions)
         const now = new Date();
@@ -757,41 +624,18 @@ export class HabitifyService {
         
         try {
           const journalResponse = await this.makeRequest<HabitifyResponse<any>>(`/journal?target_date=${properTargetDate}`);
-          console.log(`📅 Journal for ${properTargetDate}:`, journalResponse);
           
           // If successful, check if it contains completion data
           if (journalResponse.status && journalResponse.data) {
-            console.log(`🎯 JOURNAL DATA FOUND!:`, {
-              dataType: typeof journalResponse.data,
-              isArray: Array.isArray(journalResponse.data),
-              keys: journalResponse.data ? Object.keys(journalResponse.data) : 'null',
-              fullData: journalResponse.data
-            });
-            
             // Check if this contains habit completion info that matches your account
             if (journalResponse.data.habits || journalResponse.data.entries || journalResponse.data.completions) {
-              console.log('🏆 POTENTIAL REAL ACCOUNT DATA FOUND!');
+              // Real account data found
             }
           }
         } catch (error) {
-          console.log(`❌ Journal endpoint with proper date failed:`, error);
+          console.warn(`Journal endpoint failed:`, error);
         }
-        
-        console.log('🔍 TESTING ACTIONS FOR FIRST FEW HABITS:');
-        for (const habit of (response.data || []).slice(0, 3)) {
-          try {
-            const actionsResponse = await this.makeRequest<HabitifyResponse<HabitifyAction[]>>(`/actions/${habit.id}`);
-            console.log(`📋 ${habit.name} (${habit.id}):`, {
-              actionCount: actionsResponse.data?.length || 0,
-              actions: actionsResponse.data?.slice(0, 2), // Show first 2 actions
-              hasActions: (actionsResponse.data?.length || 0) > 0
-            });
-          } catch (error) {
-            console.log(`❌ Failed to get actions for ${habit.name}:`, error);
-          }
-        }
-        
-        return { success: true, message: `Connected successfully. Found ${response.data?.length || 0} habits. Check console for journal endpoint tests.` };
+        return { success: true, message: `Connected successfully. Found ${response.data?.length || 0} habits.` };
       } else {
         return { success: false, message: response.message || 'API returned error status' };
       }
@@ -799,5 +643,7 @@ export class HabitifyService {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       return { success: false, message: `Connection failed: ${errorMessage}` };
     }
+  }
+}
   }
 }

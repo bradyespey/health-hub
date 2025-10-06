@@ -8,36 +8,17 @@ export interface ReadinessData {
 
 export class AthlyticService {
   static async getReadinessData(days: number = 7): Promise<ReadinessData[]> {
-    // Stub implementation - replace with Apple Health/Athlytic API
+    // TODO: Implement Apple Health HRV and readiness data fetching
     // Will fetch from Firebase Function that processes Apple Health exports
-    
-    // Mock data
-    const mockData: ReadinessData[] = [];
-    const today = new Date();
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      mockData.push({
-        date: date.toISOString().split('T')[0],
-        readiness: Math.floor(Math.random() * 30) + 70, // 70-100
-        hrv: Math.floor(Math.random() * 20) + 30, // 30-50
-        restingHr: Math.floor(Math.random() * 10) + 55, // 55-65
-        sleepScore: Math.floor(Math.random() * 25) + 75, // 75-100
-      });
-    }
-    
-    return mockData;
+    return [];
   }
 
-  static async getLatestReadiness(): Promise<ReadinessData> {
+  static async getLatestReadiness(): Promise<ReadinessData | null> {
     const data = await this.getReadinessData(1);
-    return data[0];
+    return data.length > 0 ? data[0] : null;
   }
 
   static getLastUpdated(): Date {
-    // Mock last update time
-    return new Date(Date.now() - Math.floor(Math.random() * 3600000)); // Random time within last hour
+    return new Date();
   }
 }

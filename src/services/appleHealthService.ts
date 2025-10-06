@@ -32,32 +32,48 @@ export interface WeightData {
 export class AppleHealthService {
   static async getHydrationData(days: number = 7, userId?: string): Promise<HydrationData[]> {
     if (!userId) {
-      return this.getMockHydrationData(days);
+      // Return empty data, not mock
+      return Array.from({ length: days }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (days - 1 - i));
+        return {
+          date: date.toISOString().split('T')[0],
+          waterOunces: 0,
+          goalOunces: 120,
+        };
+      });
     }
 
     try {
       const hydrationData: HydrationData[] = [];
       const today = new Date();
       
-      // Get data for the last N days
-      for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
+      // Get data for the last N days, starting from Monday of current week
+      const todayDayOfWeek = today.getDay(); // 0=Sun, 1=Mon, etc
+      const mondayOffset = todayDayOfWeek === 0 ? -6 : 1 - todayDayOfWeek;
+      const mondayDate = new Date(today);
+      mondayDate.setDate(today.getDate() + mondayOffset);
+      
+      // Generate 7 days starting from Monday
+      for (let i = 0; i < days; i++) {
+        const date = new Date(mondayDate);
+        date.setDate(mondayDate.getDate() + i);
         const dateStr = date.toISOString().split('T')[0];
         
         // Try to get hydration data from Firestore
-        const docRef = doc(db, 'appleHealth', userId, dateStr, 'DietaryWater');
+        // Health Auto Export sends metrics with snake_case names
+        const docRef = doc(db, 'appleHealth', userId, dateStr, 'dietary_water');
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
           const data = docSnap.data() as AppleHealthRecord;
           hydrationData.push({
             date: dateStr,
-            waterOunces: Math.round(data.value * 33.814), // Convert liters to oz (if needed)
-            goalOunces: 120, // Default goal
+            waterOunces: Math.round(data.value), // Data is already in ounces from Health Auto Export
+            goalOunces: 120,
           });
         } else {
-          // No data for this date, use zero or skip
+          // No data for this date, use zero
           hydrationData.push({
             date: dateStr,
             waterOunces: 0,
@@ -69,34 +85,22 @@ export class AppleHealthService {
       return hydrationData;
     } catch (error) {
       console.error('Error fetching hydration data from Firestore:', error);
-      return this.getMockHydrationData(days);
-    }
-  }
-
-  private static getMockHydrationData(days: number): HydrationData[] {
-    const mockData: HydrationData[] = [];
-    const today = new Date();
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      const goalOunces = 120; // 120 oz daily goal
-      const waterOunces = Math.floor(Math.random() * 40) + 80; // 80-120 oz
-      
-      mockData.push({
-        date: date.toISOString().split('T')[0],
-        waterOunces,
-        goalOunces,
+      // Return zeros, not mock
+      return Array.from({ length: days }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (days - 1 - i));
+        return {
+          date: date.toISOString().split('T')[0],
+          waterOunces: 0,
+          goalOunces: 120,
+        };
       });
     }
-    
-    return mockData;
   }
 
   static async getWorkoutData(days: number = 30, userId?: string): Promise<WorkoutData[]> {
     if (!userId) {
-      return this.getMockWorkoutData(days);
+      return [];
     }
 
     try {
@@ -110,24 +114,28 @@ export class AppleHealthService {
         const dateStr = date.toISOString().split('T')[0];
         
         // Try to get workout data from multiple potential documents
-        const workoutTypes = ['Workout', 'Exercise', 'AppleExerciseTime', 'ActiveEnergyBurned'];
+        // Health Auto Export sends metrics with snake_case names
+        const exerciseRef = doc(db, 'appleHealth', userId, dateStr, 'apple_exercise_time');
+        const energyRef = doc(db, 'appleHealth', userId, dateStr, 'active_energy');
         
-        for (const workoutType of workoutTypes) {
-          const docRef = doc(db, 'appleHealth', userId, dateStr, workoutType);
-          const docSnap = await getDoc(docRef);
+        const [exerciseSnap, energySnap] = await Promise.all([
+          getDoc(exerciseRef),
+          getDoc(energyRef)
+        ]);
+        
+        if (exerciseSnap.exists() || energySnap.exists()) {
+          const exerciseData = exerciseSnap.exists() ? exerciseSnap.data() as AppleHealthRecord : null;
+          const energyData = energySnap.exists() ? energySnap.data() as AppleHealthRecord : null;
           
-          if (docSnap.exists()) {
-            const data = docSnap.data() as AppleHealthRecord;
-            
-            // Convert Apple Health workout data to our format
+          // Only add workout if we have exercise time or energy burned
+          if (exerciseData || energyData) {
             workoutData.push({
               date: dateStr,
-              type: workoutType === 'AppleExerciseTime' ? 'Exercise' : 'Workout',
-              duration: workoutType === 'AppleExerciseTime' ? data.value : 45, // minutes
-              calories: workoutType === 'ActiveEnergyBurned' ? data.value : 300,
+              type: 'Exercise',
+              duration: exerciseData ? Math.round(exerciseData.value) : 0, // minutes
+              calories: energyData ? Math.round(energyData.value) : 0, // kcal
               rpe: undefined, // RPE will need to be entered manually
             });
-            break; // Only add one workout per day
           }
         }
       }
@@ -135,40 +143,12 @@ export class AppleHealthService {
       return workoutData;
     } catch (error) {
       console.error('Error fetching workout data from Firestore:', error);
-      return this.getMockWorkoutData(days);
+      // Return empty array instead of mock data
+      return [];
     }
   }
 
-  private static getMockWorkoutData(days: number): WorkoutData[] {
-    const workoutTypes = ['Running', 'Cycling', 'Strength Training', 'Swimming', 'Yoga', 'Walking'];
-    const mockData: WorkoutData[] = [];
-    const today = new Date();
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Random chance of workout each day (70%)
-      if (Math.random() > 0.3) {
-        const type = workoutTypes[Math.floor(Math.random() * workoutTypes.length)];
-        const duration = Math.floor(Math.random() * 60) + 30; // 30-90 minutes
-        const calories = duration * (Math.floor(Math.random() * 5) + 8); // 8-12 cal/min
-        const rpe = Math.floor(Math.random() * 4) + 6; // RPE 6-10
-        
-        mockData.push({
-          date: date.toISOString().split('T')[0],
-          type,
-          duration,
-          calories,
-          rpe,
-        });
-      }
-    }
-    
-    return mockData;
-  }
-
-  static async getTodayHydration(userId?: string): Promise<HydrationData> {
+  static async getTodayHydration(userId: string): Promise<HydrationData> {
     const data = await this.getHydrationData(1, userId);
     return data[0];
   }
@@ -191,6 +171,80 @@ export class AppleHealthService {
     } catch (error) {
       console.error('Error fetching last updated time:', error);
       return new Date(0);
+    }
+  }
+
+  static async getNutritionData(days: number, userId: string): Promise<any[]> {
+    try {
+      if (!userId) {
+        return Array.from({ length: days }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          return {
+            date: date.toISOString().split('T')[0],
+            calories: 0,
+            calorieTarget: 1700,
+            protein: 0,
+            carbs: 0,
+            fat: 0
+          };
+        });
+      }
+
+      const nutritionData = [];
+      
+      for (let i = 0; i < days; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        // Use local date string to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        
+        try {
+          // Get dietary calories (consumed, not burned)
+          const dietaryRef = doc(db, 'appleHealth', userId, dateStr, 'dietary_energy_consumed');
+          const dietarySnap = await getDoc(dietaryRef);
+          
+          const dietaryCalories = dietarySnap.exists() ? dietarySnap.data().value || 0 : 0;
+          
+          nutritionData.push({
+            date: dateStr,
+            calories: Math.round(dietaryCalories),
+            calorieTarget: 1700,
+            protein: 0, // Apple Health doesn't track macros well
+            carbs: 0,
+            fat: 0
+          });
+        } catch (error) {
+          console.error(`Error fetching nutrition for ${dateStr}:`, error);
+          nutritionData.push({
+            date: dateStr,
+            calories: 0,
+            calorieTarget: 1700,
+            protein: 0,
+            carbs: 0,
+            fat: 0
+          });
+        }
+      }
+      
+      return nutritionData;
+    } catch (error) {
+      console.error('Error fetching nutrition data from Firestore:', error);
+      return Array.from({ length: days }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        return {
+          date: date.toISOString().split('T')[0],
+          calories: 0,
+          calorieTarget: 1700,
+          protein: 0,
+          carbs: 0,
+          fat: 0
+        };
+      });
     }
   }
 
@@ -229,7 +283,7 @@ export class AppleHealthService {
 
   static async getWeightData(days: number = 30, userId?: string): Promise<WeightData[]> {
     if (!userId) {
-      return this.getMockWeightData(days);
+      return [];
     }
 
     try {
@@ -242,59 +296,33 @@ export class AppleHealthService {
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        // Try to get weight data from Firestore - check multiple possible types
-        const weightTypes = ['BodyMass', 'Weight', 'BodyWeight'];
+        // Try to get weight data from Firestore
+        // Health Auto Export sends metrics with snake_case names
+        const docRef = doc(db, 'appleHealth', userId, dateStr, 'body_mass');
+        const docSnap = await getDoc(docRef);
         
-        for (const weightType of weightTypes) {
-          const docRef = doc(db, 'appleHealth', userId, dateStr, weightType);
-          const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as AppleHealthRecord;
           
-          if (docSnap.exists()) {
-            const data = docSnap.data() as AppleHealthRecord;
-            
-            // Convert to lbs if needed (Apple Health might store in kg)
-            let weightInLbs = data.value;
-            if (data.unit === 'kg') {
-              weightInLbs = data.value * 2.20462;
-            }
-            
-            weightData.push({
-              date: dateStr,
-              weight: Math.round(weightInLbs * 10) / 10, // Round to 1 decimal
-            });
-            break; // Only add one weight per day
+          // Convert to lbs if needed (Apple Health might store in kg)
+          let weightInLbs = data.value;
+          if (data.unit === 'kg') {
+            weightInLbs = data.value * 2.20462;
           }
+          
+          weightData.push({
+            date: dateStr,
+            weight: Math.round(weightInLbs * 10) / 10, // Round to 1 decimal
+          });
         }
       }
       
-      // If no data found, return mock data
-      return weightData.length > 0 ? weightData : this.getMockWeightData(days);
+      // Return only actual data, no mock data
+      return weightData;
     } catch (error) {
       console.error('Error fetching weight data from Firestore:', error);
-      return this.getMockWeightData(days);
+      return [];
     }
   }
 
-  private static getMockWeightData(days: number): WeightData[] {
-    const mockData: WeightData[] = [];
-    const today = new Date();
-    const startWeight = 210;
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Simulate gradual weight loss with some fluctuation
-      const progress = (days - 1 - i) / days;
-      const weightLoss = progress * 5; // 5 lbs total loss over the period
-      const fluctuation = (Math.random() - 0.5) * 2; // ±1 lb daily fluctuation
-      
-      mockData.push({
-        date: date.toISOString().split('T')[0],
-        weight: Math.round((startWeight - weightLoss + fluctuation) * 10) / 10,
-      });
-    }
-    
-    return mockData;
-  }
 }

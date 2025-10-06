@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Activity, Heart, Moon, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { SampleBadge } from '@/components/ui/sample-badge';
+// Sample badge removed - using real data
 import { useReadinessData } from '@/hooks/useData';
 import { AthlyticService } from '@/services/athlyticService';
 
@@ -67,7 +67,6 @@ export function ReadinessPanel() {
               Readiness & Recovery
             </CardTitle>
             <div className="flex items-center gap-2">
-              <SampleBadge />
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>
