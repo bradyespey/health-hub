@@ -62,23 +62,30 @@ export class AppleHealthService {
         
         // Try to get hydration data from Firestore
         // Health Auto Export sends metrics with snake_case names
-        const docRef = doc(db, 'appleHealth', userId, dateStr, 'dietary_water');
-        const docSnap = await getDoc(docRef);
+        // Try multiple possible field names for water
+        const waterTypes = ['dietary_water', 'water', 'water_intake', 'dietaryWater'];
+        let waterOunces = 0;
         
-        if (docSnap.exists()) {
-          const data = docSnap.data() as AppleHealthRecord;
-          hydrationData.push({
-            date: dateStr,
-            waterOunces: Math.round(data.value), // Data is already in ounces from Health Auto Export
-            goalOunces: 120,
-          });
-        } else {
-          // No data for this date, use zero
-          hydrationData.push({
-            date: dateStr,
-            waterOunces: 0,
-            goalOunces: 120,
-          });
+        for (const waterType of waterTypes) {
+          const docRef = doc(db, 'appleHealth', userId, dateStr, waterType);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const data = docSnap.data() as AppleHealthRecord;
+            waterOunces = Math.round(data.value);
+            break; // Use first found value
+          }
+        }
+        
+        hydrationData.push({
+          date: dateStr,
+          waterOunces: waterOunces,
+          goalOunces: 120,
+        });
+        
+        // Debug logging for water data
+        if (waterOunces > 0) {
+          console.log(`Found water data for ${dateStr}: ${waterOunces} oz`);
         }
       }
       
