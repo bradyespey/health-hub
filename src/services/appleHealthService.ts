@@ -194,28 +194,79 @@ export class AppleHealthService {
       const nutritionData = [];
       
       for (let i = 0; i < days; i++) {
+        // Use local timezone to match Apple Health data
         const date = new Date();
         date.setDate(date.getDate() - i);
-        // Use local date string to avoid timezone issues
+        date.setHours(0, 0, 0, 0); // Reset to start of day
+        
+        // Format date in local timezone (YYYY-MM-DD) to avoid UTC conversion issues
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         const dateStr = `${year}-${month}-${day}`;
         
         try {
-          // Get dietary calories (consumed, not burned)
-          const dietaryRef = doc(db, 'appleHealth', userId, dateStr, 'dietary_energy_consumed');
-          const dietarySnap = await getDoc(dietaryRef);
+          // Fetch calories (dietary energy)
+          const calorieTypes = ['dietary_energy', 'dietary_energy_consumed', 'dietaryEnergy'];
+          let dietaryCalories = 0;
           
-          const dietaryCalories = dietarySnap.exists() ? dietarySnap.data().value || 0 : 0;
+          for (const type of calorieTypes) {
+            const ref = doc(db, 'appleHealth', userId, dateStr, type);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+              dietaryCalories = snap.data().value || 0;
+              break;
+            }
+          }
+          
+          // Fetch macros (if available from Health Auto Export)
+          // LoseIt syncs to Apple Health as: protein, carbohydrates, fat_total
+          const proteinTypes = ['protein', 'dietary_protein', 'dietaryProtein'];
+          const carbTypes = ['carbohydrates', 'dietary_carbohydrates', 'dietaryCarbohydrates'];
+          const fatTypes = ['total_fat', 'fat_total', 'dietary_fat_total', 'dietaryFatTotal', 'dietary_fat'];
+          
+          let protein = 0, carbs = 0, fat = 0;
+          
+          for (const type of proteinTypes) {
+            const ref = doc(db, 'appleHealth', userId, dateStr, type);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+              protein = snap.data().value || 0;
+              break;
+            }
+          }
+          
+          for (const type of carbTypes) {
+            const ref = doc(db, 'appleHealth', userId, dateStr, type);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+              carbs = snap.data().value || 0;
+              break;
+            }
+          }
+          
+          for (const type of fatTypes) {
+            const ref = doc(db, 'appleHealth', userId, dateStr, type);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+              fat = snap.data().value || 0;
+              break;
+            }
+          }
+          
+          if (dietaryCalories > 0) {
+            // Nutrition data found successfully
+          } else {
+            console.warn(`No dietary calories found for ${dateStr}. Check if data was logged in Apple Health.`);
+          }
           
           nutritionData.push({
             date: dateStr,
             calories: Math.round(dietaryCalories),
             calorieTarget: 1700,
-            protein: 0, // Apple Health doesn't track macros well
-            carbs: 0,
-            fat: 0
+            protein: Math.round(protein),
+            carbs: Math.round(carbs),
+            fat: Math.round(fat)
           });
         } catch (error) {
           console.error(`Error fetching nutrition for ${dateStr}:`, error);
@@ -298,10 +349,20 @@ export class AppleHealthService {
         
         // Try to get weight data from Firestore
         // Health Auto Export sends metrics with snake_case names
-        const docRef = doc(db, 'appleHealth', userId, dateStr, 'body_mass');
-        const docSnap = await getDoc(docRef);
+        // Try multiple possible field names
+        const weightTypes = ['weight_body_mass', 'body_mass', 'bodyMass'];
+        let docSnap = null;
         
-        if (docSnap.exists()) {
+        for (const type of weightTypes) {
+          const ref = doc(db, 'appleHealth', userId, dateStr, type);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            docSnap = snap;
+            break;
+          }
+        }
+        
+        if (docSnap && docSnap.exists()) {
           const data = docSnap.data() as AppleHealthRecord;
           
           // Convert to lbs if needed (Apple Health might store in kg)

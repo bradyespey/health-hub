@@ -66,10 +66,19 @@ export function NutritionPanel() {
   const calorieProgress = (selectedDay.calories / selectedDay.calorieTarget) * 100;
   
   const macroData = [
-    { name: 'Protein', value: selectedDay.protein * 4, color: 'hsl(var(--accent))' },
-    { name: 'Carbs', value: selectedDay.carbs * 4, color: 'hsl(210, 40%, 70%)' },
-    { name: 'Fat', value: selectedDay.fat * 9, color: 'hsl(210, 40%, 50%)' },
+    { name: 'Protein', value: selectedDay.protein * 4, color: 'hsl(var(--accent))', grams: selectedDay.protein },
+    { name: 'Carbs', value: selectedDay.carbs * 4, color: 'hsl(210, 40%, 70%)', grams: selectedDay.carbs },
+    { name: 'Fat', value: selectedDay.fat * 9, color: 'hsl(210, 40%, 50%)', grams: selectedDay.fat },
   ];
+
+  // Calculate total calories from macros
+  const totalMacroCalories = macroData.reduce((sum, macro) => sum + macro.value, 0);
+  
+  // Calculate percentages
+  const macroDataWithPercentages = macroData.map(macro => ({
+    ...macro,
+    percentage: totalMacroCalories > 0 ? (macro.value / totalMacroCalories) * 100 : 0
+  }));
 
   const currentWeight = weightData[weightData.length - 1]?.weight || 0;
   const startWeight = weightData[0]?.weight || 0;
@@ -130,7 +139,10 @@ export function NutritionPanel() {
                 <span className="text-sm font-medium">{isToday ? 'Calories Today' : 'Calories'}</span>
               </div>
               <span className="text-sm text-muted-foreground">
-                {selectedDay.calories} / {selectedDay.calorieTarget} kcal
+                {new Intl.NumberFormat('en-US', { 
+                  minimumFractionDigits: (selectedDay.calories % 1 !== 0) ? 1 : 0, 
+                  maximumFractionDigits: 1 
+                }).format(selectedDay.calories)} / {new Intl.NumberFormat('en-US').format(selectedDay.calorieTarget)} kcal
               </span>
             </div>
             <Progress value={calorieProgress} className="h-2" />
@@ -147,7 +159,7 @@ export function NutritionPanel() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={macroData}
+                      data={macroDataWithPercentages}
                       cx="50%"
                       cy="50%"
                       innerRadius={30}
@@ -155,7 +167,7 @@ export function NutritionPanel() {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {macroData.map((entry, index) => (
+                      {macroDataWithPercentages.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -171,13 +183,18 @@ export function NutritionPanel() {
                 </ResponsiveContainer>
               </div>
               <div className="flex justify-center gap-4 text-xs">
-                {macroData.map((macro, index) => (
+                {macroDataWithPercentages.map((macro, index) => (
                   <div key={index} className="flex items-center gap-1">
                     <div 
                       className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: macro.color }}
                     />
-                    <span>{macro.name}</span>
+                    <span>
+                      {macro.name}: {new Intl.NumberFormat('en-US', { 
+                        minimumFractionDigits: (macro.grams % 1 !== 0) ? 1 : 0, 
+                        maximumFractionDigits: 1 
+                      }).format(macro.grams)}g ({Math.round(macro.percentage)}%)
+                    </span>
                   </div>
                 ))}
               </div>

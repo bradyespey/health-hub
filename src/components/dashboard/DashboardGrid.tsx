@@ -204,6 +204,11 @@ const panelComponents = {
   training: TrainingPanel,
   habits: HabitsPanel,
   milestones: GoalsPanel,
+  // Goal-related panels should only be used in GoalsGrid, not DashboardGrid
+  'long-term-goal': null,
+  'challenge': null,
+  'mission-185': null,
+  'scratch-off-prizes': null,
 };
 
 export function DashboardGrid() {
@@ -289,6 +294,10 @@ export function DashboardGrid() {
             
             // Handle standard panel components
             if (!PanelComponent) {
+              // Skip goal-related panels that belong in GoalsGrid
+              if (['long-term-goal', 'challenge', 'mission-185', 'scratch-off-prizes'].includes(layout.id)) {
+                return null;
+              }
               console.warn(`Panel component not found for id: ${layout.id}`);
               return null;
             }

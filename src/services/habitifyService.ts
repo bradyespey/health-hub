@@ -69,11 +69,11 @@ interface HabitifyResponse<T> {
 
 export class HabitifyService {
   private static readonly BASE_URL = 'https://api.habitify.me';
-  private static readonly API_KEY = import.meta.env.VITE_HABITIFY_API_KEY;
+  private static readonly API_KEY = import.meta.env.VITE_HABITIFY_API_KEY || '';
 
   private static async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     if (!this.API_KEY) {
-      console.warn('Habitify API key not found, returning empty data');
+      console.warn('Habitify API key not found, skipping API request');
       throw new Error('Habitify API key not configured');
     }
 

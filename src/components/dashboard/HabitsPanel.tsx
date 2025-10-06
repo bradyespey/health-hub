@@ -113,14 +113,14 @@ export function HabitsPanel() {
                       </Badge>
                       </div>
           </CardTitle>
-                          <CardDescription className="space-y-1">
-                  <div>Analytics and insights from your Habitify habits</div>
-                  {!isUsingMockData && (
-                    <div className="text-xs text-amber-600 dark:text-amber-400">
-                      📊 Analytics from historical data • Use Habitify app for daily tracking
-                    </div>
-                  )}
-                </CardDescription>
+          <CardDescription>
+            Analytics and insights from your Habitify habits
+            {!isUsingMockData && (
+              <span className="block text-xs text-amber-600 dark:text-amber-400 mt-1">
+                📊 Analytics from historical data • Use Habitify app for daily tracking
+              </span>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {showDebug && (

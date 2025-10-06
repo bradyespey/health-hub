@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebaseConfig';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLayout, NavigationItem } from '@/contexts/LayoutContext';
@@ -23,7 +23,9 @@ import {
   Star,
   GripVertical,
   Plus,
-  Trash2
+  Trash2,
+  Database,
+  RefreshCw
 } from 'lucide-react';
 import {
   DndContext,
@@ -124,6 +126,11 @@ export function AdminPanel() {
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(defaultNavigationItems);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [rawHealthData, setRawHealthData] = useState<any[]>([]);
+  const [loadingHealthData, setLoadingHealthData] = useState(false);
+  const [filterType, setFilterType] = useState<string>('');
+  const [filterSource, setFilterSource] = useState<string>('');
+  const [filterDate, setFilterDate] = useState<string>('');
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -229,6 +236,79 @@ export function AdminPanel() {
     }
   };
 
+  const loadRawHealthData = async () => {
+    if (!user?.id) return;
+    
+    setLoadingHealthData(true);
+    try {
+      // Get recent Apple Health data from Firestore
+      const today = new Date();
+      const recentDates = [];
+      
+      // Get last 14 days of data for better coverage
+      for (let i = 0; i < 14; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        recentDates.push(date.toISOString().split('T')[0]);
+      }
+      
+      const allData: any[] = [];
+      
+      // Use 'brady' as the user ID (single-user app)
+      const userId = 'brady';
+      
+      for (const dateStr of recentDates) {
+        const dateCollectionRef = collection(db, 'appleHealth', userId, dateStr);
+        const dateSnapshot = await getDocs(dateCollectionRef);
+        
+        dateSnapshot.forEach((doc) => {
+          allData.push({
+            id: doc.id,
+            date: dateStr,
+            ...doc.data()
+          });
+        });
+      }
+      
+      // Sort by date descending, then by timestamp descending
+      allData.sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        
+        if (a.timestamp && b.timestamp) {
+          return b.timestamp.toDate().getTime() - a.timestamp.toDate().getTime();
+        }
+        return 0;
+      });
+      
+      setRawHealthData(allData);
+      
+    } catch (error) {
+      console.error('Error loading raw health data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load raw health data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingHealthData(false);
+    }
+  };
+
+  // Filter raw health data
+  const filteredData = rawHealthData.filter(record => {
+    if (filterType && !record.type?.toLowerCase().includes(filterType.toLowerCase())) {
+      return false;
+    }
+    if (filterSource && !record.source?.toLowerCase().includes(filterSource.toLowerCase())) {
+      return false;
+    }
+    if (filterDate && record.date !== filterDate) {
+      return false;
+    }
+    return true;
+  });
+
   if (user?.role !== 'admin') {
     return (
       <div className="container mx-auto p-6">
@@ -249,6 +329,108 @@ export function AdminPanel() {
         <h1 className="text-3xl font-bold">Admin Panel</h1>
         <p className="text-muted-foreground">Manage system settings and configuration</p>
       </div>
+
+      {/* Raw Apple Health Data */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Raw Apple Health Data
+          </CardTitle>
+          <CardDescription>
+            View the latest Apple Health data imported from Health Auto Export to verify data freshness.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <Button onClick={loadRawHealthData} disabled={loadingHealthData} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${loadingHealthData ? 'animate-spin' : ''}`} />
+              {loadingHealthData ? 'Loading...' : 'Load Data'}
+            </Button>
+            <Badge variant="outline">
+              {filteredData.length} of {rawHealthData.length} records
+            </Badge>
+          </div>
+          
+          {rawHealthData.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-xs">Filter by Type</Label>
+                  <Input
+                    placeholder="e.g. dietary_energy"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Filter by Source</Label>
+                  <Input
+                    placeholder="e.g. health-auto-export"
+                    value={filterSource}
+                    onChange={(e) => setFilterSource(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Filter by Date</Label>
+                  <Input
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredData.map((record, index) => (
+                  <div key={`${record.date}-${record.id}-${index}`} className="p-3 border rounded-lg bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-medium text-sm">{record.type}</div>
+                      <div className="text-xs text-muted-foreground">{record.date}</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Value:</span> {new Intl.NumberFormat('en-US', { 
+                          minimumFractionDigits: (record.value % 1 !== 0) ? 1 : 0, 
+                          maximumFractionDigits: 1 
+                        }).format(record.value)}
+                        {record.unit && <span className="text-muted-foreground"> {record.unit}</span>}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Source:</span> {record.source || 'N/A'}
+                      </div>
+                      {record.min !== undefined && (
+                        <div>
+                          <span className="text-muted-foreground">Min:</span> {record.min}
+                        </div>
+                      )}
+                      {record.max !== undefined && (
+                        <div>
+                          <span className="text-muted-foreground">Max:</span> {record.max}
+                        </div>
+                      )}
+                    </div>
+                    {record.timestamp && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Imported: {record.timestamp.toDate ? record.timestamp.toDate().toLocaleString() : 'Unknown'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          
+          {rawHealthData.length === 0 && !loadingHealthData && (
+            <div className="text-center p-4 text-muted-foreground">
+              No Apple Health data found. Click "Refresh Data" to load recent imports.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Navigation Order Management */}
       <Card>
@@ -334,8 +516,6 @@ export function AdminPanel() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Apple Health Data Testing */}
 
       {/* Data Backup & Restore */}
       <BackupManager />

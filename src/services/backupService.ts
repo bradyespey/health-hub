@@ -38,7 +38,6 @@ export class BackupService {
    * Create a complete backup of user data
    */
   static async createBackup(userId: string, userEmail: string, type: 'manual' | 'automatic' = 'manual'): Promise<BackupData> {
-    console.log('Creating backup for user:', userId);
 
     try {
       // Get current layouts
@@ -81,7 +80,6 @@ export class BackupService {
         }
       };
 
-      console.log(`Backup created: ${textCards.length} text cards, ${presets.length} presets`);
       return backupData;
 
     } catch (error) {
@@ -155,8 +153,6 @@ export class BackupService {
       overwriteExisting = false
     } = options;
 
-    console.log('Starting restore for user:', userId);
-
     try {
       // Restore current layouts
       if (restoreLayouts && backupData.data.layouts.current.length > 0) {
@@ -165,7 +161,6 @@ export class BackupService {
           updatedAt: new Date(),
           restoredAt: new Date()
         });
-        console.log('Restored current layouts');
       }
 
       // Restore layout presets
@@ -176,7 +171,6 @@ export class BackupService {
             restoredAt: new Date()
           });
         }
-        console.log(`Restored ${backupData.data.layouts.presets.length} layout presets`);
       }
 
       // Restore text cards
@@ -186,7 +180,6 @@ export class BackupService {
             // Check if card already exists
             const existingCard = await TextCardService.loadTextCard(userId, card.id, card.page);
             if (existingCard) {
-              console.log(`Skipping existing card: ${card.id}`);
               continue;
             }
           }
@@ -199,10 +192,7 @@ export class BackupService {
             page: card.page
           });
         }
-        console.log(`Restored ${backupData.data.textCards.length} text cards`);
       }
-
-      console.log('Restore completed successfully');
     } catch (error) {
       console.error('Error during restore:', error);
       throw new Error('Failed to restore backup: ' + (error as Error).message);

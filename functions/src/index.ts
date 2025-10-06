@@ -194,6 +194,17 @@ export const ingestAppleHealth = functions.https.onRequest({
         const batch = db.batch();
         const batchRecords = dataToProcess.slice(i, i + BATCH_SIZE);
 
+        // Group records by date and type to sum values
+        const recordsByDateType: Record<string, {
+          type: string;
+          date: string;
+          value: number;
+          unit: string;
+          source: string;
+          min?: number;
+          max?: number;
+        }> = {};
+
         for (const record of batchRecords) {
           const { type, date, value, unit, source, min, max } = record as {
             type: string;
@@ -213,6 +224,40 @@ export const ingestAppleHealth = functions.https.onRequest({
 
           // Ensure date is in YYYY-MM-DD format
           const dateStr = new Date(date).toISOString().split('T')[0];
+          const key = `${dateStr}_${type}`;
+          
+          // For nutrition/cumulative metrics, sum the values
+          const isCumulative = type.includes('dietary') || type.includes('protein') || 
+                              type.includes('carbohydrate') || type.includes('fat') ||
+                              type.includes('sugar');
+          
+          if (recordsByDateType[key] && isCumulative) {
+            // Sum values for nutrition data
+            recordsByDateType[key].value += value;
+            // Update min/max if provided
+            if (min !== undefined) {
+              recordsByDateType[key].min = Math.min(recordsByDateType[key].min || min, min);
+            }
+            if (max !== undefined) {
+              recordsByDateType[key].max = Math.max(recordsByDateType[key].max || max, max);
+            }
+          } else {
+            // Store new record (or replace for non-cumulative like weight)
+            recordsByDateType[key] = {
+              type,
+              date: dateStr,
+              value,
+              unit: unit || '',
+              source: source || 'health-auto-export',
+              min,
+              max
+            };
+          }
+        }
+
+        // Now batch write the summed records
+        for (const record of Object.values(recordsByDateType)) {
+          const { type, date: dateStr, value, unit, source, min, max } = record;
           
           // Create document path: appleHealth/{userId}/{date}/{type}
           const docRef = db
@@ -221,21 +266,40 @@ export const ingestAppleHealth = functions.https.onRequest({
             .collection(dateStr)
             .doc(type);
 
-          // Prepare data for storage
-          const healthData: Record<string, unknown> = {
-            type,
-            date: dateStr,
-            value,
-            unit: unit || '',
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            source: source || 'health-auto-export'
-          };
+          // For nutrition/cumulative metrics, use increment to sum across batches
+          const isCumulative = type.includes('dietary') || type.includes('protein') || 
+                              type.includes('carbohydrate') || type.includes('fat') ||
+                              type.includes('sugar');
           
-          // Include min/max if available
-          if (min !== undefined) healthData.min = min;
-          if (max !== undefined) healthData.max = max;
+          if (isCumulative) {
+            // For nutrition data, set the value directly (not increment)
+            // This will overwrite any existing incorrect data
+            batch.set(docRef, {
+              type,
+              date: dateStr,
+              value,
+              unit,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              source
+            });
+          } else {
+            // Use set for non-cumulative data (weight, HRV, etc.)
+            const healthData: Record<string, unknown> = {
+              type,
+              date: dateStr,
+              value,
+              unit,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              source
+            };
+            
+            // Include min/max if available
+            if (min !== undefined) healthData.min = min;
+            if (max !== undefined) healthData.max = max;
 
-          batch.set(docRef, healthData, { merge: true });
+            batch.set(docRef, healthData);
+          }
+          
           processedDates.add(dateStr);
           processedCount++;
         }

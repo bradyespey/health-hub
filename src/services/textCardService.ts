@@ -47,7 +47,6 @@ export class TextCardService {
       }
 
       await setDoc(cardRef, cardData, { merge: true });
-      console.log(`Text card ${cardId} saved to Firestore`);
     } catch (error) {
       console.error('Error saving text card:', error);
       throw new Error('Failed to save text card');
@@ -143,7 +142,6 @@ export class TextCardService {
     try {
       const cardRef = doc(db, 'textCards', userId, page, cardId);
       await deleteDoc(cardRef);
-      console.log(`Text card ${cardId} deleted from Firestore`);
     } catch (error) {
       console.error('Error deleting text card:', error);
       throw new Error('Failed to delete text card');

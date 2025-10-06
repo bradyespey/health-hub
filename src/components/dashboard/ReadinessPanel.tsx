@@ -47,6 +47,23 @@ export function ReadinessPanel() {
   }
 
   const latest = readinessData[readinessData.length - 1];
+  
+  if (!latest) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-accent" />
+            Readiness & Recovery
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">No readiness data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   const getReadinessColor = (score: number) => {
     if (score >= 85) return 'text-green-500';
     if (score >= 70) return 'text-yellow-500';

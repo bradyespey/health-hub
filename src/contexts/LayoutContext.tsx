@@ -244,7 +244,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await setDoc(doc(db, 'layouts', user.id, 'presets', presetId), preset);
-      console.log('Layout preset saved:', name);
     } catch (error) {
       console.error('Error saving layout preset:', error);
       throw error;
@@ -261,7 +260,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         setLayouts(preset.layouts);
         setOriginalLayouts(preset.layouts);
         await saveLayoutToFirestore(preset.layouts);
-        console.log('Layout preset loaded:', preset.name);
       }
     } catch (error) {
       console.error('Error loading layout preset:', error);
@@ -291,7 +289,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     try {
       const { deleteDoc } = await import('firebase/firestore');
       await deleteDoc(doc(db, 'layouts', user.id, 'presets', presetId));
-      console.log('Layout preset deleted:', presetId);
     } catch (error) {
       console.error('Error deleting layout preset:', error);
       throw error;
@@ -321,7 +318,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           updatedBy: user.id
         }, { merge: true });
       }
-      console.log('Default layout updated');
     } catch (error) {
       console.error('Error setting default layout:', error);
       throw error;

@@ -67,12 +67,25 @@ export function useWorkoutData(days: number = 30) {
 }
 
 export function useHabits() {
-  return useSWR('habits', () => HabitifyService.getHabits(), {
-    refreshInterval: 2 * 60 * 1000, // 2 minutes for better sync
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    dedupingInterval: 0, // Force fresh data every time
-  });
+  const hasApiKey = !!import.meta.env.VITE_HABITIFY_API_KEY;
+  
+  return useSWR(
+    hasApiKey ? 'habits' : null, // Only fetch if API key exists
+    () => HabitifyService.getHabits(),
+    {
+      refreshInterval: 2 * 60 * 1000, // 2 minutes for better sync
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 0, // Force fresh data every time
+      onError: (error) => {
+        // Silently handle API key errors
+        if (error.message.includes('API key not configured')) {
+          return;
+        }
+        console.error('Habitify API error:', error);
+      },
+    }
+  );
 }
 
 export function useTodayHydration() {

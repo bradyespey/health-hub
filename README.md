@@ -2,7 +2,7 @@
 **Scope**: This README replaces prior selected overview docs
 
 ## Overview
-Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours.
+Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours. Includes comprehensive Apple Health integration with raw data verification and macro tracking.
 
 ## Live and Admin
 - 🌐 **App URL**: https://healthhub.theespeys.com
@@ -70,9 +70,10 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🔔 **Push Notifications**: 8 PM reminders for incomplete habits (Firebase Cloud Messaging)
 - 🔄 **Sync Status**: Monitoring with failure alerts and manual retry options
 - ⚖️ **Weight Tracking**: Apple Health BodyMass data synced to Firestore for Mission 185 progress visualization
-- 🍎 **Nutrition Tracking**: Apple Health dietary calories with day-by-day navigation
+- 🍎 **Nutrition Tracking**: Apple Health dietary calories with day-by-day navigation and macro percentages
 - 💧 **Hydration Monitoring**: Apple Health water intake with weekly progress tracking
 - 🏃 **Training Load**: Apple Health exercise time and active calories with calendar view
+- 🔍 **Raw Data Verification**: Admin panel displays raw Apple Health data with filtering and formatting
 
 ## Deploy
 - 🚀 **Frontend**: Automatic via GitHub integration to Netlify
@@ -90,7 +91,7 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry
 - ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns
 - 🏆 **Milestones** (`/milestones`): Weight loss goals with reward popup cards
-- ⚙️ **Admin** (`/admin`): Layout presets, navigation management, backup/restore system
+- ⚙️ **Admin** (`/admin`): Layout presets, navigation management, backup/restore system, raw Apple Health data verification
 
 ## Directory Map
 ```
