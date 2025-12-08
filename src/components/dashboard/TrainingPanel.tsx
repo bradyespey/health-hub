@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, Calendar, Flame, Clock } from 'lucide-react';
+import { Dumbbell, Calendar, Flame, Clock, WifiOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -132,10 +132,16 @@ export function TrainingPanel() {
               <Dumbbell className="h-5 w-5 text-accent" />
               Training Load
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>
+              {!user && (
+                <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 whitespace-nowrap">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Demo Mode
+                </Badge>
+              )}
             </div>
           </div>
           <CardDescription>

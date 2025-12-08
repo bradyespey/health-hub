@@ -29,7 +29,7 @@ export interface CardConfig {
  */
 export const defaultPanelConfigs: Record<string, CardConfig> = {
   // API Cards - Show data from external sources, not deletable
-  readiness: { type: 'api', allowedSizes: ['medium', 'large'], deletable: false },
+  readiness: { type: 'api', allowedSizes: ['small', 'medium', 'large'], deletable: false },
   nutrition: { type: 'api', allowedSizes: ['small', 'medium', 'large'], deletable: false },
   hydration: { type: 'api', allowedSizes: ['small', 'medium'], deletable: false },
   training: { type: 'api', allowedSizes: ['small', 'medium', 'large'], deletable: false },

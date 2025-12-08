@@ -50,7 +50,7 @@ interface LayoutContextType {
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 const defaultLayouts: CardLayout[] = [
-  { id: 'readiness', order: 0, colSpan: 2, size: 'large' },
+  { id: 'readiness', order: 0, size: 'small' },
   { id: 'hydration', order: 1, size: 'small' },
   { id: 'nutrition', order: 2, size: 'medium' },
   { id: 'training', order: 3, size: 'medium' },

@@ -1,13 +1,15 @@
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Activity, Heart, Moon, Zap } from 'lucide-react';
+import { Activity, Heart, Moon, Zap, WifiOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 // Sample badge removed - using real data
 import { useReadinessData } from '@/hooks/useData';
 import { AthlyticService } from '@/services/athlyticService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function ReadinessPanel() {
+  const { user } = useAuth();
   const { data: readinessData, isLoading, error } = useReadinessData(7);
   const lastUpdated = AthlyticService.getLastUpdated();
 
@@ -83,10 +85,16 @@ export function ReadinessPanel() {
               <Activity className="h-5 w-5 text-accent" />
               Readiness & Recovery
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>
+              {!user && (
+                <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 whitespace-nowrap">
+                  <WifiOff className="h-3 w-3 mr-1" />
+                  Demo Mode
+                </Badge>
+              )}
             </div>
           </div>
           <CardDescription>

@@ -59,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!approvedEmails.includes(userEmail)) {
         // User not approved, sign them out
-        console.log('Unauthorized email attempted sign in:', userEmail);
         await firebaseSignOut(auth);
         alert('Access denied. This app is restricted to authorized users only.');
         setLoading(false);

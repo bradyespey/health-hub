@@ -30,9 +30,7 @@ function AuthenticatedApp() {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  if (!user) {
-    return <SignInPage />;
-  }
+  // Removed sign-in check here to allow demo mode
   
   return (
     <NavigationProvider>
@@ -57,7 +55,7 @@ function AuthenticatedApp() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="espey-theme">
+    <ThemeProvider defaultTheme="system" storageKey="espey-theme">
       <AuthProvider>
         <TooltipProvider>
           <Toaster />

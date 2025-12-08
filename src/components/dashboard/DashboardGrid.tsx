@@ -295,10 +295,13 @@ export function DashboardGrid() {
             // Handle standard panel components
             if (!PanelComponent) {
               // Skip goal-related panels that belong in GoalsGrid
-              if (['long-term-goal', 'challenge', 'mission-185', 'scratch-off-prizes'].includes(layout.id)) {
+              if (['long-term-goal', 'challenge', 'mission-185', 'scratch-off-prizes', 'goals'].includes(layout.id)) {
                 return null;
               }
-              console.warn(`Panel component not found for id: ${layout.id}`);
+              // Only warn for unexpected panel IDs, not known ones like 'goals'
+              if (!['goals'].includes(layout.id)) {
+                console.warn(`Panel component not found for id: ${layout.id}`);
+              }
               return null;
             }
 

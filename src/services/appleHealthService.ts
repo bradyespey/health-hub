@@ -29,16 +29,28 @@ export interface WeightData {
   weight: number;
 }
 
+/**
+ * Service for fetching Apple Health data from Firestore.
+ * Returns mock data when userId is not provided (demo mode).
+ */
 export class AppleHealthService {
+  /**
+   * Fetches hydration data for the specified number of days.
+   * @param days - Number of days to fetch (default: 7)
+   * @param userId - User ID for authenticated users, undefined for demo mode
+   * @returns Array of hydration data with water ounces and goals
+   */
   static async getHydrationData(days: number = 7, userId?: string): Promise<HydrationData[]> {
     if (!userId) {
-      // Return empty data, not mock
+      // Return mock data for demo mode
       return Array.from({ length: days }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (days - 1 - i));
+        // Random water intake between 60 and 140 oz for realistic variation
+        const waterOunces = Math.floor(Math.random() * (140 - 60 + 1)) + 60;
         return {
           date: date.toISOString().split('T')[0],
-          waterOunces: 0,
+          waterOunces,
           goalOunces: 120,
         };
       });
@@ -94,9 +106,30 @@ export class AppleHealthService {
     }
   }
 
+  /**
+   * Fetches workout data for the specified number of days.
+   * @param days - Number of days to fetch (default: 30)
+   * @param userId - User ID for authenticated users, undefined for demo mode
+   * @returns Array of workout data with type, duration, calories, and RPE
+   */
   static async getWorkoutData(days: number = 30, userId?: string): Promise<WorkoutData[]> {
     if (!userId) {
-      return [];
+      // Return mock workout data
+      return Array.from({ length: Math.floor(days * 0.6) }, (_, i) => { // ~60% days have workouts
+        const date = new Date();
+        date.setDate(date.getDate() - Math.floor(Math.random() * days));
+        const types = ['Run', 'Strength Training', 'HIIT', 'Yoga', 'Cycling'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const duration = Math.floor(Math.random() * (90 - 30 + 1)) + 30; // 30-90 mins
+        
+        return {
+          date: date.toISOString().split('T')[0],
+          type,
+          duration,
+          calories: Math.floor(duration * (Math.random() * 5 + 5)), // ~5-10 cals/min
+          rpe: Math.floor(Math.random() * 4) + 6, // 6-9 RPE
+        };
+      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
 
     try {
@@ -144,7 +177,7 @@ export class AppleHealthService {
     }
   }
 
-  static async getTodayHydration(userId: string): Promise<HydrationData> {
+  static async getTodayHydration(userId?: string): Promise<HydrationData> {
     const data = await this.getHydrationData(1, userId);
     return data[0];
   }
@@ -170,19 +203,27 @@ export class AppleHealthService {
     }
   }
 
-  static async getNutritionData(days: number, userId: string): Promise<any[]> {
+  /**
+   * Fetches nutrition data (calories and macros) for the specified number of days.
+   * @param days - Number of days to fetch
+   * @param userId - User ID for authenticated users, undefined for demo mode
+   * @returns Array of nutrition data with calories, protein, carbs, and fat
+   */
+  static async getNutritionData(days: number, userId?: string): Promise<any[]> {
     try {
       if (!userId) {
         return Array.from({ length: days }, (_, i) => {
           const date = new Date();
           date.setDate(date.getDate() - i);
+          // Mock realistic nutrition data
+          const calories = Math.floor(Math.random() * (2400 - 1600 + 1)) + 1600;
           return {
             date: date.toISOString().split('T')[0],
-            calories: 0,
-            calorieTarget: 1700,
-            protein: 0,
-            carbs: 0,
-            fat: 0
+            calories,
+            calorieTarget: 2000,
+            protein: Math.floor(Math.random() * (180 - 120 + 1)) + 120,
+            carbs: Math.floor(Math.random() * (250 - 150 + 1)) + 150,
+            fat: Math.floor(Math.random() * (80 - 50 + 1)) + 50
           };
         });
       }
@@ -328,9 +369,26 @@ export class AppleHealthService {
     }
   }
 
+  /**
+   * Fetches weight data for the specified number of days.
+   * @param days - Number of days to fetch (default: 30)
+   * @param userId - User ID for authenticated users, undefined for demo mode
+   * @returns Array of weight data with date and weight in pounds
+   */
   static async getWeightData(days: number = 30, userId?: string): Promise<WeightData[]> {
     if (!userId) {
-      return [];
+      // Mock weight trend
+      let currentWeight = 185.0;
+      return Array.from({ length: days }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (days - 1 - i));
+        // Slight fluctuation and downward trend
+        currentWeight += (Math.random() - 0.6) * 0.5;
+        return {
+          date: date.toISOString().split('T')[0],
+          weight: Math.round(currentWeight * 10) / 10,
+        };
+      });
     }
 
     try {

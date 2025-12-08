@@ -39,7 +39,7 @@ interface SortableItemProps {
 
 // Define which sizes each card type supports
 const cardSizeConstraints: Record<string, CardSize[]> = {
-  readiness: ['medium', 'large'],
+  readiness: ['small', 'medium', 'large'],
   nutrition: ['small', 'medium', 'large'],
   hydration: ['small', 'medium'],
   training: ['small', 'medium', 'large'],

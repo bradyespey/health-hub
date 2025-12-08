@@ -2,7 +2,7 @@
 **Scope**: This README replaces prior selected overview docs
 
 ## Overview
-Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours. Includes comprehensive Apple Health integration with raw data verification and macro tracking.
+Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours. Includes comprehensive Apple Health integration with raw data verification and macro tracking. **Public demo mode available** - visitors can view the dashboard with mock data without authentication; sign-in required to access personal data.
 
 ## Live and Admin
 - 🌐 **App URL**: https://healthhub.theespeys.com
@@ -83,15 +83,15 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🔥 **Functions**: Firebase Cloud Functions in us-south1 (Dallas)
 
 ## App Pages / Routes
-- 📊 **Dashboard** (`/`): Draggable grid with all six health panels and resizable cards
+- 📊 **Dashboard** (`/`): Draggable grid with all six health panels and resizable cards. **Public access** - shows mock data for unauthenticated users
 - 🎯 **Goals** (`/goals`): Mission 185 weight tracker with line graph, scratch-off prize logging, long-term plans, and 30-day challenges
-- 💪 **Readiness** (`/readiness`): Apple Health HRV trends and recovery metrics
-- 🍎 **Nutrition** (`/nutrition`): Apple Health calories and macro tracking
-- 💧 **Hydration** (`/hydration`): Water intake tracking with week-by-week navigation and date ranges
-- 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry
-- ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns
+- 💪 **Readiness** (`/readiness`): Apple Health HRV trends and recovery metrics with demo mode support
+- 🍎 **Nutrition** (`/nutrition`): Apple Health calories and macro tracking with demo mode support
+- 💧 **Hydration** (`/hydration`): Water intake tracking with week-by-week navigation and date ranges. Demo mode shows realistic mock data
+- 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry. Demo mode shows sample workout calendar
+- ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns. Falls back to mock data when API key unavailable
 - 🏆 **Milestones** (`/milestones`): Weight loss goals with reward popup cards
-- ⚙️ **Admin** (`/admin`): Layout presets, navigation management, backup/restore system, raw Apple Health data verification
+- ⚙️ **Admin** (`/admin`): Layout presets, navigation management, backup/restore system, raw Apple Health data verification (authenticated users only)
 
 ## Directory Map
 ```

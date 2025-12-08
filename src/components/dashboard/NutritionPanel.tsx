@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Apple, Target, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Apple, Target, TrendingDown, ChevronLeft, ChevronRight, WifiOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { useNutritionData, useWeightData } from '@/hooks/useData';
 import { AppleHealthService } from '@/services/appleHealthService';
 
+import { useAuth } from '@/contexts/AuthContext';
+
 export function NutritionPanel() {
+  const { user } = useAuth();
   const { data: nutritionData, isLoading: nutritionLoading } = useNutritionData(7);
   const { data: weightData, isLoading: weightLoading } = useWeightData(30);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -97,7 +100,7 @@ export function NutritionPanel() {
               <Apple className="h-5 w-5 text-accent" />
               Nutrition
             </CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
@@ -121,9 +124,17 @@ export function NutritionPanel() {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              <Badge variant="outline" className="text-xs">
-                {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Badge>
+                {!user && (
+                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 whitespace-nowrap">
+                    <WifiOff className="h-3 w-3 mr-1" />
+                    Demo Mode
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
           <CardDescription>

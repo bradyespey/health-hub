@@ -32,7 +32,7 @@ const sidebarStates = [
 
 export function DashboardSidebar() {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, signIn } = useAuth();
   const { sidebarState, setSidebarState, isExpanded } = useSidebarState();
   const { navigationItems } = useNavigation();
   const [isHovered, setIsHovered] = useState(false);
@@ -236,10 +236,10 @@ export function DashboardSidebar() {
           )}
         </div>
 
-        {/* User Section */}
-        {user && (
-          <div className="p-2 border-t flex-shrink-0">
-            {shouldShowExpanded ? (
+        {/* User Section - Show Sign In if not logged in */}
+        <div className="p-2 border-t flex-shrink-0">
+          {user ? (
+            shouldShowExpanded ? (
               <div className="flex items-center gap-3 px-3 py-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.avatar} />
@@ -294,9 +294,48 @@ export function DashboardSidebar() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            shouldShowExpanded ? (
+              <Button 
+                variant="default" 
+                className="w-full gap-2"
+                onClick={async () => {
+                  try {
+                    await signIn();
+                  } catch (error) {
+                    console.error('Sign in failed:', error);
+                  }
+                }}
+              >
+                <User className="h-4 w-4" />
+                <span>Sign In</span>
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="default" 
+                    size="icon" 
+                    className="h-9 w-9"
+                    onClick={async () => {
+                      try {
+                        await signIn();
+                      } catch (error) {
+                        console.error('Sign in failed:', error);
+                      }
+                    }}
+                  >
+                    <User className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Sign In</p>
+                </TooltipContent>
+              </Tooltip>
+            )
+          )}
+        </div>
       </aside>
     </TooltipProvider>
   );

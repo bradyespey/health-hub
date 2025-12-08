@@ -67,10 +67,21 @@ interface HabitifyResponse<T> {
   status: boolean;
 }
 
+/**
+ * Service for interacting with the Habitify API.
+ * Returns mock data when API key is not configured (demo mode).
+ */
 export class HabitifyService {
   private static readonly BASE_URL = 'https://api.habitify.me';
   private static readonly API_KEY = import.meta.env.VITE_HABITIFY_API_KEY || '';
 
+  /**
+   * Makes an authenticated request to the Habitify API.
+   * @param endpoint - API endpoint path
+   * @param options - Fetch options (method, body, etc.)
+   * @returns Parsed JSON response
+   * @throws Error if API key is missing or request fails
+   */
   private static async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     if (!this.API_KEY) {
       console.warn('Habitify API key not found, skipping API request');
@@ -106,7 +117,103 @@ export class HabitifyService {
     return response.json();
   }
 
+  /**
+   * Fetches all habits from Habitify API or returns mock data if API key is not configured.
+   * @returns Array of habits with analytics, streaks, and completion status
+   */
   static async getHabits(): Promise<Habit[]> {
+    // Return mock data if no API key is configured
+    if (!this.API_KEY) {
+      // Using mock data - API key not configured
+      return [
+        {
+          id: '1',
+          name: 'Morning Meditation',
+          icon: '🧘‍♂️',
+          streak: 12,
+          completedToday: true,
+          target: 1,
+          frequency: 'daily',
+          analytics: {
+            totalCompletions: 145,
+            completionRate: 85,
+            bestStreak: 21,
+            currentStreak: 12,
+            lastSevenDays: [true, true, true, true, true, true, true],
+            recentActivity: []
+          }
+        },
+        {
+          id: '2',
+          name: 'Read 30 mins',
+          icon: '📚',
+          streak: 3,
+          completedToday: false,
+          target: 1,
+          frequency: 'daily',
+          analytics: {
+            totalCompletions: 89,
+            completionRate: 65,
+            bestStreak: 14,
+            currentStreak: 3,
+            lastSevenDays: [false, true, true, true, false, false, true],
+            recentActivity: []
+          }
+        },
+        {
+          id: '3',
+          name: 'Workout',
+          icon: '💪',
+          streak: 0,
+          completedToday: false,
+          target: 1,
+          frequency: 'daily',
+          analytics: {
+            totalCompletions: 120,
+            completionRate: 72,
+            bestStreak: 15,
+            currentStreak: 0,
+            lastSevenDays: [true, false, true, true, false, true, false],
+            recentActivity: []
+          }
+        },
+        {
+          id: '4',
+          name: 'Drink Water',
+          icon: '💧',
+          streak: 45,
+          completedToday: true,
+          target: 1,
+          frequency: 'daily',
+          analytics: {
+            totalCompletions: 300,
+            completionRate: 98,
+            bestStreak: 45,
+            currentStreak: 45,
+            lastSevenDays: [true, true, true, true, true, true, true],
+            recentActivity: []
+          }
+        },
+        {
+          id: '5',
+          name: 'No Sugar',
+          icon: '🍬',
+          streak: 5,
+          completedToday: true,
+          target: 1,
+          frequency: 'daily',
+          analytics: {
+            totalCompletions: 45,
+            completionRate: 60,
+            bestStreak: 10,
+            currentStreak: 5,
+            lastSevenDays: [true, true, true, true, true, false, false],
+            recentActivity: []
+          }
+        }
+      ];
+    }
+
     try {
       // Fetching habits from Habitify API
       
@@ -253,7 +360,7 @@ export class HabitifyService {
         })
       );
 
-      console.info('✅ Successfully fetched habits with today\'s completion status from Habitify API');
+      // Successfully fetched habits from Habitify API
       return habitsWithStatus;
       
     } catch (error) {
@@ -372,7 +479,7 @@ export class HabitifyService {
         );
 
         if (updateResponse.status) {
-          console.info(`Successfully ${newStatus === 1 ? 'completed' : 'uncompleted'} habit in Habitify API`);
+          // Successfully updated habit status in Habitify API
           return {
             habitId,
             date: today,
@@ -411,7 +518,7 @@ export class HabitifyService {
         });
 
         if (createResponse.status) {
-          console.info('Successfully created habit completion in Habitify API');
+          // Successfully created habit completion in Habitify API
           return {
             habitId,
             date: today,

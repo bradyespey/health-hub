@@ -28,7 +28,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pageInfo = getPageInfo(location.pathname);
 
   return (
-    <CustomSidebarProvider defaultState="collapsed" storageKey="espey-sidebar-state">
+    <CustomSidebarProvider defaultState="expanded" storageKey="espey-sidebar-state">
       <SidebarProvider defaultOpen={false}>
         <div className="min-h-screen flex w-full bg-background">
           <DashboardSidebar />
