@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebaseConfig';
 import { NavigationItem } from './LayoutContext';
+import { useAuth } from './AuthContext';
 import { 
   LayoutGrid, 
   Activity, 
@@ -44,15 +45,25 @@ interface NavigationContextType {
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const isDemo = !user;
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(defaultNavigationItems);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadNavigationItems();
-  }, []);
+  }, [isDemo]);
 
   const loadNavigationItems = async () => {
     setLoading(true);
+    
+    // In demo mode, use default navigation items without Firestore access
+    if (isDemo) {
+      setNavigationItems(defaultNavigationItems);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const settingsDoc = await getDoc(doc(db, 'system', 'settings'));
       if (settingsDoc.exists() && settingsDoc.data().navigationItems) {
@@ -65,7 +76,12 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
         setNavigationItems(defaultNavigationItems);
       }
     } catch (error) {
-      console.error('Error loading navigation items:', error);
+      // Suppress permission errors in demo/public mode
+      if (error instanceof Error && (error.message.includes('permission') || error.message.includes('Missing or insufficient'))) {
+        console.warn('Firestore permission error (expected in demo mode):', error);
+      } else {
+        console.error('Error loading navigation items:', error);
+      }
       // Fall back to default items on error
       setNavigationItems(defaultNavigationItems);
     } finally {
@@ -74,7 +90,9 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   };
 
   const refreshNavigation = async () => {
-    await loadNavigationItems();
+    if (!isDemo) {
+      await loadNavigationItems();
+    }
   };
 
   return (
