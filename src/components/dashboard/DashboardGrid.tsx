@@ -300,7 +300,7 @@ export function DashboardGrid() {
               }
               // Only warn for unexpected panel IDs, not known ones like 'goals'
               if (!['goals'].includes(layout.id)) {
-                console.warn(`Panel component not found for id: ${layout.id}`);
+              console.warn(`Panel component not found for id: ${layout.id}`);
               }
               return null;
             }

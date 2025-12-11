@@ -125,9 +125,9 @@ export function NutritionPanel() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Badge>
+              <Badge variant="outline" className="text-xs">
+                {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Badge>
                 {!user && (
                   <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 whitespace-nowrap">
                     <WifiOff className="h-3 w-3 mr-1" />

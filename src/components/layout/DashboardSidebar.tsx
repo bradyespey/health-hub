@@ -237,7 +237,7 @@ export function DashboardSidebar() {
         </div>
 
         {/* User Section - Show Sign In if not logged in */}
-        <div className="p-2 border-t flex-shrink-0">
+          <div className="p-2 border-t flex-shrink-0">
           {user ? (
             shouldShowExpanded ? (
               <div className="flex items-center gap-3 px-3 py-2">
@@ -334,8 +334,8 @@ export function DashboardSidebar() {
                 </TooltipContent>
               </Tooltip>
             )
-          )}
-        </div>
+            )}
+          </div>
       </aside>
     </TooltipProvider>
   );
