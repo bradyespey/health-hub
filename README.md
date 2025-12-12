@@ -10,6 +10,7 @@ Personal health and habit dashboard hosted at healthhub.theespeys.com with autom
 - 🚀 **Netlify Dashboard**: espeyhealthhub
 - 📊 **Lovable Project**: Health dashboard development platform
 - 🔐 **Auth Roles**: Admin (Brady) & Viewer (Jenny)
+- ⏰ **GitHub Actions**: Weekly database backup (Wednesday 12:00 AM CT)
 
 ## Tech Stack
 - ⚛️ **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS
