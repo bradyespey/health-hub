@@ -26,11 +26,44 @@ Personal health and habit dashboard hosted at healthhub.theespeys.com with autom
 git clone https://github.com/bradyespey/health-hub
 cd HealthHub
 npm install
+
+# Install 1Password CLI (if not already installed)
+brew install --cask 1password-cli
+
+# Set up 1Password Environment (see Environment section below)
 npm run dev
 ```
 
 ## Environment
-Required environment variables:
+
+**All projects use 1Password Developer Environments for local environment variables.** This allows seamless setup on any computer without managing local `.env` files.
+
+### 1Password Setup
+
+1. **Enable 1Password Developer**:
+   - Open 1Password desktop app
+   - Settings → Developer → Turn on "Show 1Password Developer experience"
+
+2. **Create Environment**:
+   - Go to Developer → Environments (Espey Family account)
+   - Create new environment: `HealthHub`
+   - Import `.env` file or add variables manually
+
+3. **Install 1Password CLI**:
+   ```bash
+   brew install --cask 1password-cli
+   ```
+
+4. **Run Project**:
+   ```bash
+   npm run dev
+   ```
+   - The `dev` script uses `op run --env-file=.env -- vite` to automatically load variables from 1Password
+   - No local `.env` file needed
+
+### Required Environment Variables
+
+All variables should be stored in your 1Password Environment:
 
 ```env
 # Firebase Configuration
@@ -47,7 +80,7 @@ VITE_HABITIFY_API_KEY=YOUR_HABITIFY_KEY
 # Google Drive Backup (Cloud Functions)
 GOOGLE_PROJECT_ID=YOUR_PROJECT_ID
 GOOGLE_PRIVATE_KEY_ID=YOUR_PRIVATE_KEY_ID
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n" # Single line with \n escapes
 GOOGLE_CLIENT_EMAIL=health-hub-backup@YOUR_PROJECT.iam.gserviceaccount.com
 GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 ```
