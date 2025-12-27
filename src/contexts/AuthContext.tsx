@@ -32,6 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If Firebase auth is not available, run in demo mode
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // User is signed in, fetch/create user doc
@@ -59,8 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!approvedEmails.includes(userEmail)) {
         // User not approved, sign them out
-        await firebaseSignOut(auth);
+        if (auth) {
+          await firebaseSignOut(auth);
+        }
         alert('Access denied. This app is restricted to authorized users only.');
+        setLoading(false);
+        return;
+      }
+
+      if (!db) {
+        console.error('Firestore not available');
         setLoading(false);
         return;
       }
@@ -130,6 +144,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (): Promise<void> => {
+    if (!auth || !googleProvider) {
+      throw new Error('Firebase authentication is not configured. Please set up environment variables.');
+    }
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
@@ -142,6 +159,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async (): Promise<void> => {
+    if (!auth) {
+      setUser(null);
+      return;
+    }
     setLoading(true);
     try {
       await firebaseSignOut(auth);
@@ -154,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserPreferences = async (preferences: Partial<User['preferences']>): Promise<void> => {
-    if (!user) return;
+    if (!user || !db) return;
 
     try {
       const userDocRef = doc(db, 'users', user.id);

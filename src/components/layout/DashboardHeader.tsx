@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, RefreshCw, Sun, Moon, Monitor, Edit3, Check, Menu, X, Activity, Apple, Droplets, Dumbbell, CheckSquare, Trophy, LayoutGrid, Ban, Plus, Save, FolderOpen } from 'lucide-react';
+import { Calendar, RefreshCw, Sun, Moon, Monitor, Menu, X, LayoutGrid, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -18,39 +18,30 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/components/ThemeProvider';
 import { UserRole } from '@/contexts/AuthContext';
-import { useLayout } from '@/contexts/LayoutContext';
 import { useSidebarState } from '@/contexts/SidebarContext';
 import { useNavigation, iconMap } from '@/contexts/NavigationContext';
 import { cn } from '@/lib/utils';
-import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { LayoutPresetDialog } from '@/components/ui/layout-preset-dialog';
+import { PageInfo } from '@/components/ui/page-info';
+import { getPageInfo } from '@/utils/pageInfo';
 
 interface DashboardHeaderProps {
   onRefresh: () => void;
   lastRefresh: Date;
   userRole?: UserRole;
+  pathname: string;
 }
 
-export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardHeaderProps) {
+export function DashboardHeader({ onRefresh, lastRefresh, userRole, pathname }: DashboardHeaderProps) {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
     to: new Date(),
   });
   const { theme, setTheme } = useTheme();
-  const { isEditMode, setEditMode, cancelEdit, addCard } = useLayout();
   const { setSidebarState } = useSidebarState();
   const { navigationItems } = useNavigation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-
-  const handleAddCard = () => {
-    // Get current page context for better card naming
-    const pageName = location.pathname === '/' ? 'Dashboard' : 
-      location.pathname.split('/')[1]?.charAt(0).toUpperCase() + 
-      location.pathname.split('/')[1]?.slice(1) || 'Custom';
-    
-    addCard('text', `${pageName} Text Card`, 'Additional content for this section');
-  };
+  const pageInfo = getPageInfo(pathname);
 
 
   // Navigation items now come from NavigationContext
@@ -139,76 +130,14 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole }: DashboardH
             <span className="hidden sm:inline">Refresh</span>
           </Button>
 
-          {/* Edit Layout Buttons - Admin only */}
-          {userRole === 'admin' && (
-            <>
-              {/* Add Text Card Button - Only in edit mode */}
-              {isEditMode && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddCard}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Add Card</span>
-                </Button>
-              )}
-              
-              {/* Layout Presets Button - Only in edit mode */}
-              {isEditMode && (
-                <LayoutPresetDialog>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                    <span className="hidden sm:inline">Layouts</span>
-                  </Button>
-                </LayoutPresetDialog>
-              )}
-              
-              
-              {isEditMode && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={cancelEdit}
-                  className="gap-2"
-                >
-                  <Ban className="h-4 w-4" />
-                  <span className="hidden sm:inline">Cancel</span>
-                </Button>
-              )}
-              <div className="flex items-center gap-1">
-                <Button
-                  variant={isEditMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setEditMode(!isEditMode)}
-                  className="gap-2"
-                >
-                  {isEditMode ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      <span className="hidden sm:inline">Save</span>
-                    </>
-                  ) : (
-                    <>
-                      <Edit3 className="h-4 w-4" />
-                      <span className="hidden lg:inline">Edit Layout</span>
-                      <span className="hidden sm:inline lg:hidden">Edit</span>
-                    </>
-                  )}
-                </Button>
-                {!isEditMode && (
-                  <HelpTooltip 
-                    content="Click Edit Layout to customize your dashboard. You can drag cards to reorder, resize them, add new text cards, and delete cards you don't need."
-                    side="bottom"
-                  />
-                )}
-              </div>
-            </>
+          {/* Page Info Button */}
+          {pageInfo && (
+            <PageInfo 
+              title={pageInfo.title}
+              description={pageInfo.description}
+              tips={pageInfo.tips}
+              inline={true}
+            />
           )}
 
           {/* Theme Toggle */}

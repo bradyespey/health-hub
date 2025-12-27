@@ -84,7 +84,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   }, [location.pathname]);
 
   const loadLayoutFromFirestore = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !db) {
+      // Use default layouts if no user or no Firebase
+      setLayouts(defaultLayouts);
+      setOriginalLayouts(defaultLayouts);
+      setLoading(false);
+      return;
+    }
 
     try {
       const layoutDoc = await getDoc(doc(db, 'layouts', user.id, 'pages', 'dashboard'));
@@ -119,6 +125,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loadSystemDefaultLayout = async (): Promise<CardLayout[] | null> => {
+    if (!db) return null;
     try {
       const systemDoc = await getDoc(doc(db, 'system', 'settings'));
       if (systemDoc.exists() && systemDoc.data().defaultLayout) {
@@ -132,7 +139,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveLayoutToFirestore = async (newLayouts: CardLayout[]) => {
-    if (!user?.id) return;
+    if (!user?.id || !db) return;
 
     try {
       // Clean the layouts data to remove any functions or invalid Firestore data
@@ -232,7 +239,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveLayoutPreset = async (name: string) => {
-    if (!user?.id) return;
+    if (!user?.id || !db) return;
 
     const presetId = `preset-${Date.now()}`;
     const preset: LayoutPreset = {
@@ -251,7 +258,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loadLayoutPreset = async (presetId: string) => {
-    if (!user?.id) return;
+    if (!user?.id || !db) return;
 
     try {
       const presetDoc = await getDoc(doc(db, 'layouts', user.id, 'presets', presetId));
@@ -268,7 +275,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getLayoutPresets = async (): Promise<LayoutPreset[]> => {
-    if (!user?.id) return [];
+    if (!user?.id || !db) return [];
 
     try {
       const { getDocs, collection } = await import('firebase/firestore');
@@ -284,7 +291,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteLayoutPreset = async (presetId: string) => {
-    if (!user?.id) return;
+    if (!user?.id || !db) return;
 
     try {
       const { deleteDoc } = await import('firebase/firestore');
@@ -296,7 +303,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setDefaultLayout = async (presetId?: string) => {
-    if (!user?.id || user.role !== 'admin') return;
+    if (!user?.id || user.role !== 'admin' || !db) return;
 
     try {
       if (presetId) {

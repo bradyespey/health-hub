@@ -20,7 +20,6 @@ import {
   CheckSquare, 
   Trophy,
   Settings,
-  Star,
   GripVertical,
   Plus,
   Trash2,
@@ -120,7 +119,6 @@ function SortableNavigationItem({ item, onDelete }: SortableNavigationItemProps)
 
 export function AdminPanel() {
   const { user } = useAuth();
-  const { setDefaultLayout } = useLayout();
   const { refreshNavigation } = useNavigation();
   const { toast } = useToast();
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(defaultNavigationItems);
@@ -216,22 +214,6 @@ export function AdminPanel() {
         const newIndex = items.findIndex((item) => item.url === over.id);
 
         return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  const handleSetCurrentAsDefault = async () => {
-    try {
-      await setDefaultLayout();
-      toast({
-        title: "Success",
-        description: "Current layout set as default for new users",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to set default layout",
-        variant: "destructive",
       });
     }
   };
@@ -478,42 +460,6 @@ export function AdminPanel() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Layout Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5" />
-            Default Layout Management
-          </CardTitle>
-          <CardDescription>
-            Manage the default layout that new users see when they first sign in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Button onClick={handleSetCurrentAsDefault} className="gap-2">
-              <Star className="h-4 w-4" />
-              Set Current Layout as Default
-            </Button>
-            <Badge variant="outline">
-              Current layout will be used for new users
-            </Badge>
-          </div>
-          
-          <div className="text-sm text-muted-foreground">
-            <p>
-              • The current dashboard layout will become the default for new users
-            </p>
-            <p>
-              • Existing users keep their personal layouts
-            </p>
-            <p>
-              • You can also set defaults from saved presets in the Layout Presets dialog
-            </p>
-          </div>
         </CardContent>
       </Card>
 

@@ -21,6 +21,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebarState } from '@/contexts/SidebarContext';
 import { useNavigation, iconMap } from '@/contexts/NavigationContext';
+import { auth } from '@/lib/firebaseConfig';
 
 // Default navigation items moved to NavigationContext
 
@@ -50,17 +51,19 @@ export function DashboardSidebar() {
     <TooltipProvider>
       <aside 
         className={cn(
-          "hidden md:flex flex-col bg-card border-r transition-all duration-300 ease-in-out relative group h-screen sticky top-0",
+          "hidden md:flex flex-col border-r transition-all duration-300 ease-in-out relative group h-screen sticky top-0",
+          "bg-gradient-to-b from-background via-background to-muted/20",
+          "border-border/50 shadow-sm",
           shouldShowExpanded ? "w-64" : "w-16"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Header */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-border/50 bg-gradient-to-r from-accent/5 to-transparent">
           {shouldShowExpanded ? (
             <NavLink to="/" className="block">
-              <h2 className="text-lg font-bold text-accent hover:text-accent/80 transition-colors">
+              <h2 className="text-lg font-bold bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent hover:from-accent/80 hover:to-accent/50 transition-all">
                 Espey Performance Hub
               </h2>
             </NavLink>
@@ -68,7 +71,7 @@ export function DashboardSidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink to="/" className="flex items-center justify-center">
-                  <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent/70 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
                     <Activity className="h-5 w-5 text-accent-foreground" />
                   </div>
                 </NavLink>
@@ -84,7 +87,7 @@ export function DashboardSidebar() {
         <nav className="flex-1 p-2 overflow-y-auto">
           <div className="space-y-1">
             {shouldShowExpanded && (
-              <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30 mb-2">
                 Navigation
               </div>
             )}
@@ -99,10 +102,10 @@ export function DashboardSidebar() {
                       <NavLink
                         to={item.url}
                         className={cn(
-                          "flex items-center justify-center h-10 w-10 rounded-lg transition-colors mx-auto",
+                          "flex items-center justify-center h-10 w-10 rounded-lg transition-all mx-auto",
                           active 
-                            ? "bg-accent text-accent-foreground" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            ? "bg-gradient-to-br from-accent to-accent/80 text-accent-foreground shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:scale-105"
                         )}
                       >
                         <Icon className="h-5 w-5" />
@@ -120,10 +123,10 @@ export function DashboardSidebar() {
                   key={item.title}
                   to={item.url}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
                     active 
-                      ? "bg-accent text-accent-foreground" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "bg-gradient-to-r from-accent/90 to-accent/70 text-accent-foreground shadow-sm font-medium" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:translate-x-1"
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -136,9 +139,9 @@ export function DashboardSidebar() {
 
         {/* Admin Section */}
         {user?.role === 'admin' && (
-          <div className="p-2 border-t flex-shrink-0">
+          <div className="p-2 border-t border-border/50 flex-shrink-0 bg-muted/20">
             {shouldShowExpanded && (
-              <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30 mb-2">
                 Admin
               </div>
             )}
@@ -148,10 +151,10 @@ export function DashboardSidebar() {
                   <NavLink
                     to="/admin"
                     className={cn(
-                      "flex items-center justify-center h-10 w-10 rounded-lg transition-colors mx-auto",
+                      "flex items-center justify-center h-10 w-10 rounded-lg transition-all mx-auto",
                       isActive('/admin')
-                        ? "bg-accent text-accent-foreground" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-gradient-to-br from-accent to-accent/80 text-accent-foreground shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:scale-105"
                     )}
                   >
                     <Settings className="h-5 w-5" />
@@ -165,10 +168,10 @@ export function DashboardSidebar() {
               <NavLink
                 to="/admin"
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
                   isActive('/admin')
-                    ? "bg-accent text-accent-foreground" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-gradient-to-r from-accent/90 to-accent/70 text-accent-foreground shadow-sm font-medium" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:translate-x-1"
                 )}
               >
                 <Settings className="h-5 w-5" />
@@ -179,7 +182,7 @@ export function DashboardSidebar() {
         )}
 
         {/* Settings & Sidebar Controls */}
-        <div className="p-2 border-t flex-shrink-0">
+        <div className="p-2 border-t border-border/50 flex-shrink-0 bg-muted/10">
           {shouldShowExpanded ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
@@ -237,7 +240,7 @@ export function DashboardSidebar() {
         </div>
 
         {/* User Section - Show Sign In if not logged in */}
-          <div className="p-2 border-t flex-shrink-0">
+          <div className="p-2 border-t border-border/50 flex-shrink-0 bg-gradient-to-t from-muted/30 to-transparent">
           {user ? (
             shouldShowExpanded ? (
               <div className="flex items-center gap-3 px-3 py-2">
@@ -334,7 +337,7 @@ export function DashboardSidebar() {
                 </TooltipContent>
               </Tooltip>
             )
-            )}
+          )}
           </div>
       </aside>
     </TooltipProvider>

@@ -26,6 +26,10 @@ export class TextCardService {
       page: string;
     }
   ): Promise<void> {
+    if (!db) {
+      console.warn('Firestore not available. Text card not saved.');
+      return;
+    }
     try {
       const cardRef = doc(db, 'textCards', userId, data.page, cardId);
       
@@ -61,6 +65,7 @@ export class TextCardService {
     cardId: string,
     page: string
   ): Promise<TextCardData | null> {
+    if (!db) return null;
     try {
       const cardRef = doc(db, 'textCards', userId, page, cardId);
       const cardDoc = await getDoc(cardRef);
@@ -93,6 +98,7 @@ export class TextCardService {
     userId: string,
     page: string
   ): Promise<TextCardData[]> {
+    if (!db) return [];
     try {
       const cardsSnapshot = await getDocs(collection(db, 'textCards', userId, page));
       
@@ -139,6 +145,10 @@ export class TextCardService {
     cardId: string,
     page: string
   ): Promise<void> {
+    if (!db) {
+      console.warn('Firestore not available. Text card not deleted.');
+      return;
+    }
     try {
       const cardRef = doc(db, 'textCards', userId, page, cardId);
       await deleteDoc(cardRef);

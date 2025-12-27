@@ -183,7 +183,7 @@ export class AppleHealthService {
   }
 
   static async getLastUpdated(userId?: string): Promise<Date> {
-    if (!userId) {
+    if (!userId || !db) {
       return new Date(Date.now() - Math.floor(Math.random() * 900000)); // Random time within last 15 min
     }
 
@@ -338,7 +338,7 @@ export class AppleHealthService {
 
   // Helper method to get all available health data types for a user
   static async getAvailableDataTypes(userId: string, date?: string): Promise<string[]> {
-    if (!userId) return [];
+    if (!userId || !db) return [];
 
     try {
       const dateStr = date || new Date().toISOString().split('T')[0];

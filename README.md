@@ -2,7 +2,7 @@
 **Scope**: This README replaces prior selected overview docs
 
 ## Overview
-Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours. Includes comprehensive Apple Health integration with raw data verification and macro tracking. **Public demo mode available** - visitors can view the dashboard with mock data without authentication; sign-in required to access personal data.
+Personal health and habit dashboard hosted at healthhub.theespeys.com with automated data pipeline from multiple health/fitness apps. Features six core panels (Readiness & Recovery, Nutrition, Hydration, Training Load, Habits, Milestones) with interactive habit check-offs, milestone rewards, and automated Cloud Functions fetching data every 2 hours. Includes comprehensive Apple Health integration with raw data verification and macro tracking. **Public demo mode available** - visitors can view the dashboard with mock data without authentication; sign-in required to access personal data. Uses a fixed flow layout system for consistent, readable data presentation across all pages.
 
 ## Live and Admin
 - 🌐 **App URL**: https://healthhub.theespeys.com
@@ -18,7 +18,7 @@ Personal health and habit dashboard hosted at healthhub.theespeys.com with autom
 - 🔥 **Backend**: Firebase (Auth, Firestore, Cloud Functions, Cloud Messaging)
 - 📊 **Data Viz**: Recharts for charts and analytics
 - 🔐 **Auth**: Firebase Google OAuth with email restrictions
-- 🎯 **Layout**: Drag-and-drop layouts via @dnd-kit with Firestore persistence
+- 🎯 **Layout**: Fixed flow layout system with consistent card sizing and vertical flow
 - 📱 **PWA**: Progressive Web App with offline support
 
 ## Quick Start
@@ -117,28 +117,27 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🔥 **Functions**: Firebase Cloud Functions in us-south1 (Dallas)
 
 ## App Pages / Routes
-- 📊 **Dashboard** (`/`): Draggable grid with all six health panels and resizable cards. **Public access** - shows mock data for unauthenticated users
-- 🎯 **Goals** (`/goals`): Mission 185 weight tracker with line graph, scratch-off prize logging, long-term plans, and 30-day challenges
-- 💪 **Readiness** (`/readiness`): Apple Health HRV trends and recovery metrics with demo mode support
-- 🍎 **Nutrition** (`/nutrition`): Apple Health calories and macro tracking with demo mode support
-- 💧 **Hydration** (`/hydration`): Water intake tracking with week-by-week navigation and date ranges. Demo mode shows realistic mock data
-- 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry. Demo mode shows sample workout calendar
-- ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns. Falls back to mock data when API key unavailable
-- 🏆 **Milestones** (`/milestones`): Weight loss goals with reward popup cards
-- ⚙️ **Admin** (`/admin`): Layout presets, navigation management, backup/restore system, raw Apple Health data verification (authenticated users only)
+- 📊 **Dashboard** (`/`): Fixed flow layout with all health panels and goal cards. Shows Habits, Milestone Progress, Readiness, Nutrition, Hydration, Training, and all Goals cards (Long-term Goal, 30-Day Challenge, Mission 185, Scratch-Off Prizes). Includes aggregated notes from all pages. **Public access** - shows mock data for unauthenticated users (demo mode)
+- 🎯 **Goals** (`/goals`): Mission 185 weight tracker with line graph, scratch-off prize logging, long-term plans, and 30-day challenges. Includes page-specific notes
+- 💪 **Readiness** (`/readiness`): Apple Health HRV trends and recovery metrics with demo mode support. Includes page-specific notes
+- 🍎 **Nutrition** (`/nutrition`): Apple Health calories and macro tracking with demo mode support. Includes page-specific notes
+- 💧 **Hydration** (`/hydration`): Water intake tracking with week-by-week navigation and date ranges. Demo mode shows realistic mock data. Includes page-specific notes
+- 🏃 **Training** (`/training`): Apple Watch workouts with RPE entry. Demo mode shows sample workout calendar. Includes page-specific notes
+- ✅ **Habits** (`/habits`): Habitify analytics with streak counters and completion patterns. Falls back to mock data when API key unavailable. Includes page-specific notes
+- ⚙️ **Admin** (`/admin`): Navigation menu order management, backup/restore system, raw Apple Health data verification (authenticated users only)
 
 ## Directory Map
 ```
 HealthHub/
 ├── src/
 │   ├── components/
-│   │   ├── dashboard/       # Six health panels + draggable grid system
+│   │   ├── dashboard/       # Health panels + fixed flow grid system + goal cards + page notes
 │   │   ├── layout/          # Sidebar, header, mobile nav with theme toggle
 │   │   ├── admin/           # Admin panel, backup manager, Apple Health test
 │   │   ├── auth/            # Firebase Google sign-in
-│   │   └── ui/              # shadcn/ui components + rich text editor
+│   │   └── ui/              # shadcn/ui components + rich text editor + page info popover
 │   ├── contexts/            # Auth, Layout, Navigation, Sidebar contexts
-│   ├── services/            # Apple Health and Habitify API services
+│   ├── services/            # Apple Health, Habitify API, TextCard (notes), and backup services
 │   ├── hooks/               # SWR data hooks and custom utilities
 │   └── utils/               # Panel helpers and page info utilities
 ├── functions/src/           # Firebase Cloud Functions for automation
@@ -146,15 +145,32 @@ HealthHub/
 └── firebase.json           # Firebase configuration
 ```
 
+## Key Features
+
+### Layout System
+- **Fixed Flow Layout**: Consistent vertical flow of cards across all pages (no drag-and-drop)
+- **Card Sizing**: Standardized medium-sized cards with consistent spacing
+- **Dashboard Aggregation**: Dashboard page shows all health panels plus all goal cards from the Goals page
+- **Page Notes**: Editable notes system (admin-only) scoped per page, with dashboard showing aggregated notes from all pages
+
+### Demo Mode
+- **No Firebase Required**: App runs in demo mode when `VITE_FIREBASE_API_KEY` is not set
+- **Mock Data**: Realistic mock data displayed for all panels when Firebase is unavailable
+- **Graceful Degradation**: All services handle null Firebase instances gracefully
+
+### Page Info System
+- **Popover Help**: Page info button in header navigation opens contextual help via popover
+- **Per-Page Tips**: Each page has specific usage tips and instructions
+
 ## Troubleshooting
-- 🔐 **Auth Issues**: Verify Firebase authorized domains include both production URLs
+- 🔐 **Auth Issues**: Verify Firebase authorized domains include both production URLs. App runs in demo mode if Firebase not configured
 - 📱 **PWA Install**: Check manifest.json and service worker registration
 - 🔄 **Data Sync**: Monitor Cloud Functions logs for API failures and retry logic
-- 🎨 **Layout Issues**: Use admin panel to reset layouts or restore from backup
 - 📊 **Health Data**: Health Auto Export app required for Apple Health integration (see docs/Apple Health Setup Guide.md)
 - 🗂️ **Data Sources**: Apple Health is the primary source for nutrition, hydration, training, and weight data (Lose It! and Athlytic APIs unavailable)
 - 💾 **Backup/Restore**: Google Drive integration requires service account setup
 - 🔔 **Notifications**: Firebase Cloud Messaging needs proper permissions and tokens
+- 🎨 **Layout**: Fixed flow layout - customization done via code changes, not UI
 
 ## AI Handoff
-Read this README, scan the repo, prioritize core functions and env-safe areas, keep env and rules aligned with this file. Focus on health data integration, drag-and-drop layout system, and automated backup functionality. The rich text editor system uses Tiptap with custom spacing rules.
+Read this README, scan the repo, prioritize core functions and env-safe areas, keep env and rules aligned with this file. Focus on health data integration, fixed flow layout system, page notes system, and automated backup functionality. The rich text editor system uses Tiptap with custom spacing rules. The app supports demo mode when Firebase is not configured - all services handle null Firebase instances gracefully.

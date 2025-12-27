@@ -38,6 +38,9 @@ export class BackupService {
    * Create a complete backup of user data
    */
   static async createBackup(userId: string, userEmail: string, type: 'manual' | 'automatic' = 'manual'): Promise<BackupData> {
+    if (!db) {
+      throw new Error('Firestore not available. Cannot create backup.');
+    }
 
     try {
       // Get current layouts
@@ -146,6 +149,10 @@ export class BackupService {
       overwriteExisting?: boolean;
     } = {}
   ): Promise<void> {
+    if (!db) {
+      throw new Error('Firestore not available. Cannot restore backup.');
+    }
+
     const {
       restoreLayouts = true,
       restorePresets = true,

@@ -47,7 +47,7 @@ export function ScratchOffPrizesCard() {
   // Load existing entries
   useEffect(() => {
     const loadEntries = async () => {
-      if (!user) return;
+      if (!user || !db) return;
 
       try {
         const q = query(
@@ -74,7 +74,7 @@ export function ScratchOffPrizesCard() {
   }, [user]);
 
   const handleAdd = async () => {
-    if (!user || !category || !description || !completedDate) {
+    if (!user || !db || !category || !description || !completedDate) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
@@ -124,7 +124,7 @@ export function ScratchOffPrizesCard() {
   };
 
   const handleDelete = async (entryId: string) => {
-    if (!user || !entryId) return;
+    if (!user || !db || !entryId) return;
 
     try {
       await deleteDoc(doc(db, 'users', user.id, 'scratchOffPrizes', entryId));

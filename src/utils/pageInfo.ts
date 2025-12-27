@@ -10,10 +10,8 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     description: "Your complete health and fitness overview in one place",
     tips: [
       "View all your health metrics at a glance",
-      "Click 'Edit Layout' to customize card positions and sizes",
-      "Add custom text cards for notes or goals using 'Add Card'", 
-      "Drag cards to reorder them and resize using the hover controls",
-      "Delete text cards you don't need (data cards can't be deleted)"
+      "Scroll down for your Notes section",
+      "Use Notes to track quick thoughts, goals, or reminders"
     ]
   },
   readiness: {
@@ -22,8 +20,7 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     tips: [
       "Monitor your HRV and readiness trends from Athlytic",
       "Use this data to plan your training intensity",
-      "Add text cards for recovery notes or observations",
-      "Switch to edit mode to customize the layout"
+      "Add notes for recovery observations"
     ]
   },
   nutrition: {
@@ -32,8 +29,7 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     tips: [
       "Track calories vs your 1,700 kcal daily target",
       "View macro breakdown from Lose It! data",
-      "Add text cards for meal plans or nutrition notes",
-      "Use edit mode to adjust card sizes and positions"
+      "Add notes for meal plans or nutrition ideas"
     ]
   },
   hydration: {
@@ -42,8 +38,7 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     tips: [
       "Track water intake from Apple Health",
       "Monitor progress toward daily hydration goals",
-      "Add text cards for hydration reminders or tips",
-      "Customize the layout in edit mode"
+      "Add notes for hydration reminders"
     ]
   },
   training: {
@@ -52,8 +47,7 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     tips: [
       "View workout data from Apple Health and Apple Watch",
       "Monitor training intensity and volume trends",
-      "Add text cards for workout plans or training notes",
-      "Use edit mode to organize your training data"
+      "Add notes for workout plans or training reminders"
     ]
   },
   habits: {
@@ -62,7 +56,7 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     tips: [
       "View habit completion rates and current streaks",
       "Track your progress over the last 7 days",
-      "Add text cards for habit goals or motivation",
+      "Add notes for habit goals or motivation",
       "Note: Use Habitify mobile app to check off habits"
     ]
   },
@@ -71,9 +65,8 @@ export const pageInfoConfig: Record<string, PageInfoConfig> = {
     description: "Manage your long-term goals and current challenges",
     tips: [
       "Edit your weight loss plan and 30-day challenge",
-      "Add custom goal cards for new objectives",
       "Use the rich text editor to format your goals",
-      "Delete any goal cards you no longer need"
+      "Add notes for supporting details, checklists, or reflections"
     ]
   }
 };

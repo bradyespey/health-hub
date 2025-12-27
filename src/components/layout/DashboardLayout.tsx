@@ -5,10 +5,8 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { SidebarProvider as CustomSidebarProvider } from '@/contexts/SidebarContext';
 import { DashboardSidebar } from './DashboardSidebar';
 import { DashboardHeader } from './DashboardHeader';
-import { PageInfo } from '@/components/ui/page-info';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { getPageInfo } from '@/utils/pageInfo';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -25,8 +23,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     window.location.reload();
   };
 
-  const pageInfo = getPageInfo(location.pathname);
-
   return (
     <CustomSidebarProvider defaultState="expanded" storageKey="espey-sidebar-state">
       <SidebarProvider defaultOpen={false}>
@@ -38,6 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               onRefresh={handleRefresh}
               lastRefresh={lastRefresh}
               userRole={user?.role}
+              pathname={location.pathname}
             />
             
             <main className="flex-1 p-3 md:p-6 overflow-x-hidden pb-20 md:pb-6">
@@ -52,16 +49,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </motion.div>
             </main>
           </div>
-          
-          {/* Page Info Button */}
-          {pageInfo && (
-            <PageInfo 
-              title={pageInfo.title}
-              description={pageInfo.description}
-              tips={pageInfo.tips}
-            />
-          )}
-
         </div>
       </SidebarProvider>
     </CustomSidebarProvider>
