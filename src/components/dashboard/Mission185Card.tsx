@@ -1,12 +1,23 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, TrendingDown } from 'lucide-react';
+import { Target, TrendingDown, WifiOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useWeightData } from '@/hooks/useData';
+import { useAuth } from '@/contexts/AuthContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 
-const milestones = [
+// Demo mode: Generic milestones
+const demoMilestones = [
+  { weight: 205, reward: 'Milestone Reward 1', cost: '$75', date: 'Week 4' },
+  { weight: 200, reward: 'Milestone Reward 2', cost: '$150', date: 'Week 8' },
+  { weight: 195, reward: 'Milestone Reward 3', cost: '$220', date: 'Week 12' },
+  { weight: 190, reward: 'Milestone Reward 4', cost: '$350', date: 'Week 16' },
+  { weight: 185, reward: 'Final Goal Reward', cost: '$530', date: 'Week 20' },
+];
+
+// Personal milestones (only shown when authenticated)
+const personalMilestones = [
   { weight: 205, reward: 'Top Golf date night', cost: '$75', date: 'Aug 1' },
   { weight: 200, reward: 'Concert or Texas Longhorns game', cost: '$150', date: 'Aug 24' },
   { weight: 195, reward: 'Couples 90-min massage', cost: '$220', date: 'Sep 17' },
@@ -15,11 +26,16 @@ const milestones = [
 ];
 
 export function Mission185Card() {
+  const { user } = useAuth();
   const { data: weightData, isLoading } = useWeightData(120); // Get ~4 months of data
   
-  const currentWeight = weightData && weightData.length > 0 
-    ? weightData[weightData.length - 1].weight 
-    : 205;
+  // Use demo milestones if not authenticated
+  const milestones = user ? personalMilestones : demoMilestones;
+  
+  // Use mock weight for demo mode
+  const currentWeight = user
+    ? (weightData && weightData.length > 0 ? weightData[weightData.length - 1].weight : 205)
+    : 195; // Demo weight showing progress
 
   const startWeight = 210;
   const targetWeight = 185;
@@ -45,11 +61,19 @@ export function Mission185Card() {
             <Target className="h-5 w-5 text-accent" />
             <CardTitle>Mission 185</CardTitle>
           </div>
-          <Badge variant="outline" className="text-xs">
-            {Math.round(progressPercent)}% Complete
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              {Math.round(progressPercent)}% Complete
+            </Badge>
+            {!user && (
+              <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 whitespace-nowrap">
+                <WifiOff className="h-3 w-3 mr-1" />
+                Demo Mode
+              </Badge>
+            )}
+          </div>
         </div>
-        <CardDescription>210 lbs → 185 lbs | July 9 - Nov 1, 2025</CardDescription>
+        <CardDescription>210 lbs → 185 lbs | {user ? 'July 9 - Nov 1, 2025' : '20-week challenge'}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 overflow-y-auto">
         {/* Current Stats */}
@@ -186,4 +210,3 @@ export function Mission185Card() {
     </Card>
   );
 }
-

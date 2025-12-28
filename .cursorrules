@@ -1,0 +1,131 @@
+# HealthHub Cursor Rules
+
+## Project Overview
+Personal health and habit dashboard with automated data pipeline from health/fitness apps. Features demo mode for public viewing and Google OAuth for authenticated personal data access.
+
+## Demo Mode Requirements ⚠️ CRITICAL
+**NEVER expose personal data publicly. All components MUST support demo mode.**
+
+### Demo Mode Implementation
+1. **Check Authentication**: Use `const { user } = useAuth()` to determine if user is signed in
+2. **Show Demo Badge**: Display "Demo Mode" badge when `!user`
+3. **Use Mock Data**: Show realistic but fake data when `!user`
+4. **Hide Personal Info**: Never show real names, specific dates/times, personal metrics in demo mode
+
+### Demo Mode Patterns
+```typescript
+// Pattern 1: Mock data fallback
+const { user } = useAuth();
+const actualWeight = user ? weightData?.[weightData.length - 1]?.weight : null;
+const displayWeight = actualWeight || 195; // Mock fallback
+
+// Pattern 2: Generic milestones
+const demoMilestones = [
+  { weight: 205, reward: 'Reward 1', cost: '$75' },
+  { weight: 200, reward: 'Reward 2', cost: '$150' },
+  // Generic rewards, no personal details
+];
+const milestones = user ? personalMilestones : demoMilestones;
+
+// Pattern 3: Demo badge
+{!user && (
+  <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400">
+    <WifiOff className="h-3 w-3 mr-1" />
+    Demo Mode
+  </Badge>
+)}
+```
+
+### Components Requiring Demo Mode
+- ✅ `ReadinessPanel` - Shows demo badge, uses mock HRV data
+- ✅ `NutritionPanel` - Shows demo badge, uses mock nutrition/weight data
+- ✅ `HydrationPanel` - Shows demo badge, uses mock hydration data
+- ✅ `TrainingPanel` - Shows demo badge, uses mock workout data
+- ✅ `HabitsPanel` - Shows demo badge, falls back to mock when API unavailable
+- ❌ `MilestoneProgressPanel` - **NEEDS FIX**: Currently shows personal rewards
+- ✅ `LongTermGoalCard` - Admin-editable, not visible to non-authenticated users
+- ✅ `ChallengeCard` - Admin-editable, not visible to non-authenticated users
+- ✅ `Mission185Card` - Shows weight data, needs demo mode check
+- ✅ `ScratchOffPrizesCard` - Requires authentication to view
+
+### Reference Projects
+- `/Users/brady/Library/CloudStorage/GoogleDrive-baespey@gmail.com/My Drive/Projects/Budget` - Example of proper demo mode with mock financial data
+- `/Users/brady/Library/CloudStorage/GoogleDrive-baespey@gmail.com/My Drive/Projects/SportsHub` - Example of demo mode with generic team names
+
+## Tech Stack
+- React 18 + Vite + TypeScript + Tailwind CSS
+- shadcn/ui + Framer Motion
+- Firebase (Auth, Firestore, Cloud Functions)
+- Recharts for data visualization
+- Fixed flow layout (no drag-and-drop)
+
+## Code Patterns
+
+### Firebase Safety
+Always check if Firebase services are available:
+```typescript
+if (!db) {
+  console.warn('Firestore not available');
+  return;
+}
+```
+
+### Authentication
+```typescript
+const { user } = useAuth();
+// user is null when not authenticated (demo mode)
+// user.role is 'admin' or 'viewer' when authenticated
+```
+
+### Layout System
+- Fixed vertical flow layout (no drag-and-drop)
+- Dashboard shows all health panels + all goal cards
+- Each subpage shows specific panel + page notes
+
+### Page Notes System
+- Per-page scoped editable notes (admin only)
+- Dashboard aggregates notes from all pages
+- Uses `TextCardService` for Firestore persistence
+
+## Environment Variables
+Required for production, optional for demo mode:
+- `VITE_FIREBASE_API_KEY` - If missing, app runs in demo mode
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_HABITIFY_API_KEY`
+
+## File Organization
+- `src/components/dashboard/` - Health panels + goal cards
+- `src/components/layout/` - Sidebar, header, navigation
+- `src/components/admin/` - Admin-only features
+- `src/contexts/` - Auth, Layout, Navigation, Sidebar
+- `src/services/` - API services (Apple Health, Habitify, TextCard, Backup)
+- `src/hooks/` - SWR data hooks
+- `src/utils/` - Panel helpers, page info
+
+## Best Practices
+1. **Demo Mode First**: Always consider demo mode when writing components
+2. **No Personal Data**: Never hardcode personal information in components
+3. **Mock Data**: Use realistic but generic mock data for demo mode
+4. **Error Handling**: Gracefully handle Firebase/API failures
+5. **Accessibility**: Use semantic HTML and ARIA labels
+6. **Performance**: Lazy load components, optimize re-renders
+7. **Type Safety**: Use TypeScript strictly, avoid `any`
+
+## Debugging
+- Console warnings are acceptable (not errors)
+- Firebase errors in demo mode are expected and handled
+- Use `console.error` for actual errors only
+
+## Deployment
+- Frontend: Netlify (auto-deploy from GitHub)
+- Functions: Firebase Cloud Functions
+- Build: `npm run build`
+- Deploy script: `npm run deploy:watch`
+
+## AI Handoff
+Focus on demo mode compliance, health data integration, fixed flow layout, and page notes system. Ensure all new components properly handle unauthenticated users with mock data.
+

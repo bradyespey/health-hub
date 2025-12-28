@@ -1,10 +1,22 @@
 import { motion } from 'framer-motion';
-import { Target } from 'lucide-react';
+import { Target, WifiOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useWeightData } from '@/hooks/useData';
+import { useAuth } from '@/contexts/AuthContext';
 
-const milestoneRewards = [
+// Demo mode: Generic milestones without personal details
+const demoMilestoneRewards = [
+  { weight: 205, date: 'Week 4', reward: 'Milestone Reward 1', cost: '$75' },
+  { weight: 200, date: 'Week 8', reward: 'Milestone Reward 2', cost: '$150' },
+  { weight: 195, date: 'Week 12', reward: 'Milestone Reward 3', cost: '$220' },
+  { weight: 190, date: 'Week 16', reward: 'Milestone Reward 4', cost: '$350' },
+  { weight: 185, date: 'Week 20', reward: 'Final Goal Reward', cost: '$530' },
+];
+
+// Personal milestones (only shown when authenticated)
+const personalMilestoneRewards = [
   { weight: 205, date: 'Aug 1', reward: 'Top Golf date night', cost: '$75' },
   { weight: 200, date: 'Aug 24', reward: 'Concert (Lil Wayne 9/16) or Texas Longhorns home game', cost: '$150' },
   { weight: 195, date: 'Sep 17', reward: 'Couples 90-min massage at Viva Day Spa', cost: '$220' },
@@ -13,8 +25,16 @@ const milestoneRewards = [
 ];
 
 export function MilestoneProgressPanel() {
+  const { user } = useAuth();
   const { data: weightData } = useWeightData(30);
-  const currentWeight = weightData?.[weightData.length - 1]?.weight || 212;
+  
+  // Use demo milestones if not authenticated
+  const milestoneRewards = user ? personalMilestoneRewards : demoMilestoneRewards;
+  
+  // Use mock weight for demo mode
+  const currentWeight = user 
+    ? (weightData?.[weightData.length - 1]?.weight || 212)
+    : 195; // Demo weight showing progress
 
   return (
     <motion.div
@@ -24,10 +44,18 @@ export function MilestoneProgressPanel() {
     >
       <Card className="relative flex flex-col h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-accent" />
-            Milestone Progress
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-accent" />
+              Milestone Progress
+            </CardTitle>
+            {!user && (
+              <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400 whitespace-nowrap">
+                <WifiOff className="h-3 w-3 mr-1" />
+                Demo Mode
+              </Badge>
+            )}
+          </div>
           <CardDescription>Weight loss milestones & rewards tracker</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto">
