@@ -7,6 +7,9 @@ export default defineConfig({
   server: {
     host: "::",
     port: 5176,
+    watch: {
+      ignored: ['**/.env']
+    }
   },
   plugins: [
     react(),
