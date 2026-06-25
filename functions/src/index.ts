@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { google } from 'googleapis';
 import cors from 'cors';
 
@@ -183,7 +184,7 @@ export const ingestAppleHealth = functions.https.onRequest({
       console.log(`Received Apple Health data for user: ${userId}, records: ${dataToProcess.length}`);
 
       // Get Firestore instance
-      const db = admin.firestore();
+      const db = getFirestore();
       
       // Process records in batches of 450 (Firestore limit is 500)
       const BATCH_SIZE = 450;
@@ -279,7 +280,7 @@ export const ingestAppleHealth = functions.https.onRequest({
               date: dateStr,
               value,
               unit,
-              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              timestamp: FieldValue.serverTimestamp(),
               source
             });
           } else {
@@ -289,7 +290,7 @@ export const ingestAppleHealth = functions.https.onRequest({
               date: dateStr,
               value,
               unit,
-              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              timestamp: FieldValue.serverTimestamp(),
               source
             };
             
@@ -317,7 +318,7 @@ export const ingestAppleHealth = functions.https.onRequest({
         .doc('summary');
 
       await latestRef.set({
-        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdated: FieldValue.serverTimestamp(),
         recordCount: processedCount,
         datesUpdated: Array.from(processedDates)
       }, { merge: true });
