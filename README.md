@@ -13,7 +13,7 @@ Personal health and habit dashboard hosted at healthhub.theespeys.com with autom
 - ⏰ **GitHub Actions**: Weekly database backup (Wednesday 12:00 AM CT)
 
 ## Tech Stack
-- ⚛️ **Frontend**: React 19 + Vite 8 + TypeScript 6 + Tailwind CSS 4
+- ⚛️ **Frontend**: React 19 + Vite 8 + TypeScript 6 + Tailwind CSS 3
 - 🎨 **UI**: shadcn/ui component library + Framer Motion animations
 - 🔥 **Backend**: Firebase (Auth, Firestore, Cloud Functions, Cloud Messaging)
 - 📊 **Data Viz**: Recharts for charts and analytics
