@@ -26,18 +26,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <CustomSidebarProvider defaultState="expanded" storageKey="espey-sidebar-state">
       <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen flex w-full bg-background">
+        <div className="min-h-screen flex w-full gap-3 p-3 md:gap-4 md:p-4 bg-[radial-gradient(circle_at_top_left,_rgba(255,127,80,0.10),_transparent_28%),linear-gradient(135deg,_theme(colors.background)_0%,_theme(colors.background)_100%)]">
           <DashboardSidebar />
-          
-          <div className="flex-1 flex flex-col min-w-0">
-            <DashboardHeader 
+
+          <div className="flex-1 flex flex-col min-w-0 gap-3 md:gap-4">
+            <DashboardHeader
               onRefresh={handleRefresh}
               lastRefresh={lastRefresh}
               userRole={user?.role}
               pathname={location.pathname}
             />
-            
-            <main className="flex-1 p-3 md:p-6 overflow-x-hidden pb-20 md:pb-6">
+
+            <main className="flex-1 overflow-x-hidden pb-20 md:pb-2">
               <motion.div
                 key={lastRefresh.getTime()}
                 initial={{ opacity: 0, y: 10 }}

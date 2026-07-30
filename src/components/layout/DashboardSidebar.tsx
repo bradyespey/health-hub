@@ -49,21 +49,23 @@ export function DashboardSidebar() {
 
   return (
     <TooltipProvider>
-      <aside 
+      <aside
         className={cn(
-          "hidden md:flex flex-col border-r transition-all duration-300 ease-in-out relative group h-screen sticky top-0",
-          "bg-gradient-to-b from-background via-background to-muted/20",
-          "border-border/50 shadow-sm",
+          "hidden md:flex flex-col rounded-3xl border transition-all duration-300 ease-in-out relative group h-[calc(100vh-1.5rem)] md:h-[calc(100vh-2rem)] sticky top-3 md:top-4",
+          "bg-[color:hsl(var(--sidebar-background))] border-[color:hsl(var(--sidebar-border))] shadow-sm",
           shouldShowExpanded ? "w-64" : "w-16"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Header */}
-        <div className="p-4 border-b border-border/50 bg-gradient-to-r from-accent/5 to-transparent">
+        <div className="p-4 border-b border-[color:hsl(var(--sidebar-border))]">
           {shouldShowExpanded ? (
-            <NavLink to="/" className="block">
-              <h2 className="text-lg font-bold bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent hover:from-accent/80 hover:to-accent/50 transition-all">
+            <NavLink to="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-sm">
+                <Activity className="h-5 w-5" />
+              </div>
+              <h2 className="font-display text-lg leading-tight text-[color:hsl(var(--sidebar-foreground))]">
                 Espey Performance Hub
               </h2>
             </NavLink>
@@ -71,7 +73,7 @@ export function DashboardSidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink to="/" className="flex items-center justify-center">
-                  <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent/70 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
+                  <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-sm">
                     <Activity className="h-5 w-5 text-accent-foreground" />
                   </div>
                 </NavLink>
@@ -87,7 +89,7 @@ export function DashboardSidebar() {
         <nav className="flex-1 p-2 overflow-y-auto">
           <div className="space-y-1">
             {shouldShowExpanded && (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30 mb-2">
+              <div className="px-3 py-2 text-xs font-semibold text-[color:hsl(var(--sidebar-foreground))]/60 uppercase tracking-wider border-b border-[color:hsl(var(--sidebar-border))] mb-2">
                 Navigation
               </div>
             )}
@@ -104,8 +106,8 @@ export function DashboardSidebar() {
                         className={cn(
                           "flex items-center justify-center h-10 w-10 rounded-lg transition-all mx-auto",
                           active 
-                            ? "bg-gradient-to-br from-accent to-accent/80 text-accent-foreground shadow-sm" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:scale-105"
+                            ? "bg-[color:hsl(var(--sidebar-accent))] text-[color:hsl(var(--sidebar-accent-foreground))] shadow-sm" 
+                            : "text-[color:hsl(var(--sidebar-foreground))]/70 hover:text-[color:hsl(var(--sidebar-foreground))] hover:bg-[color:hsl(var(--sidebar-accent))]/50"
                         )}
                       >
                         <Icon className="h-5 w-5" />
@@ -125,8 +127,8 @@ export function DashboardSidebar() {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
                     active 
-                      ? "bg-gradient-to-r from-accent/90 to-accent/70 text-accent-foreground shadow-sm font-medium" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:translate-x-1"
+                      ? "bg-[color:hsl(var(--sidebar-accent))] text-[color:hsl(var(--sidebar-accent-foreground))] shadow-sm font-medium" 
+                      : "text-[color:hsl(var(--sidebar-foreground))]/70 hover:text-[color:hsl(var(--sidebar-foreground))] hover:bg-[color:hsl(var(--sidebar-accent))]/50"
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -139,9 +141,9 @@ export function DashboardSidebar() {
 
         {/* Admin Section */}
         {user?.role === 'admin' && (
-          <div className="p-2 border-t border-border/50 flex-shrink-0 bg-muted/20">
+          <div className="p-2 border-t border-[color:hsl(var(--sidebar-border))] flex-shrink-0">
             {shouldShowExpanded && (
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30 mb-2">
+              <div className="px-3 py-2 text-xs font-semibold text-[color:hsl(var(--sidebar-foreground))]/60 uppercase tracking-wider border-b border-[color:hsl(var(--sidebar-border))] mb-2">
                 Admin
               </div>
             )}
@@ -153,8 +155,8 @@ export function DashboardSidebar() {
                     className={cn(
                       "flex items-center justify-center h-10 w-10 rounded-lg transition-all mx-auto",
                       isActive('/admin')
-                        ? "bg-gradient-to-br from-accent to-accent/80 text-accent-foreground shadow-sm" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:scale-105"
+                        ? "bg-[color:hsl(var(--sidebar-accent))] text-[color:hsl(var(--sidebar-accent-foreground))] shadow-sm" 
+                        : "text-[color:hsl(var(--sidebar-foreground))]/70 hover:text-[color:hsl(var(--sidebar-foreground))] hover:bg-[color:hsl(var(--sidebar-accent))]/50"
                     )}
                   >
                     <Settings className="h-5 w-5" />
@@ -170,8 +172,8 @@ export function DashboardSidebar() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
                   isActive('/admin')
-                    ? "bg-gradient-to-r from-accent/90 to-accent/70 text-accent-foreground shadow-sm font-medium" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:translate-x-1"
+                    ? "bg-[color:hsl(var(--sidebar-accent))] text-[color:hsl(var(--sidebar-accent-foreground))] shadow-sm font-medium" 
+                    : "text-[color:hsl(var(--sidebar-foreground))]/70 hover:text-[color:hsl(var(--sidebar-foreground))] hover:bg-[color:hsl(var(--sidebar-accent))]/50"
                 )}
               >
                 <Settings className="h-5 w-5" />
@@ -182,7 +184,7 @@ export function DashboardSidebar() {
         )}
 
         {/* Settings & Sidebar Controls */}
-        <div className="p-2 border-t border-border/50 flex-shrink-0 bg-muted/10">
+        <div className="p-2 border-t border-[color:hsl(var(--sidebar-border))] flex-shrink-0">
           {shouldShowExpanded ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
@@ -240,7 +242,7 @@ export function DashboardSidebar() {
         </div>
 
         {/* User Section - Show Sign In if not logged in */}
-          <div className="p-2 border-t border-border/50 flex-shrink-0 bg-gradient-to-t from-muted/30 to-transparent">
+          <div className="p-2 border-t border-[color:hsl(var(--sidebar-border))] flex-shrink-0">
           {user ? (
             shouldShowExpanded ? (
               <div className="flex items-center gap-3 px-3 py-2">

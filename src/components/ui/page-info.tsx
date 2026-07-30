@@ -17,8 +17,8 @@ export function PageInfo({ title, description, tips, inline = false }: PageInfoP
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
-          className="gap-2"
+          size="icon"
+          className="h-9 w-9 sm:w-auto sm:px-3 sm:gap-2"
         >
           <Info className="h-4 w-4" />
           <span className="hidden sm:inline">Page Info</span>

@@ -66,12 +66,12 @@ export function HabitsPanel() {
     >
       <Card className="h-full">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <CheckSquare className="h-5 w-5 text-accent" />
               Habits
             </div>
-                                  <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap sm:justify-end">
                         <Button
                           variant="outline"
                           size="sm"

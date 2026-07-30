@@ -66,13 +66,13 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole, pathname }: 
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex h-14 items-center gap-2 md:gap-4 px-3 md:px-6">
           {/* Mobile Menu Button */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="md:hidden h-7 w-7"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-9 w-9"
             onClick={() => setMobileMenuOpen(true)}
           >
             <Menu className="h-4 w-4" />
@@ -121,9 +121,9 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole, pathname }: 
           {/* Refresh Button */}
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={onRefresh}
-            className="gap-2"
+            className="h-9 w-9 sm:w-auto sm:px-3 sm:gap-2"
             disabled={userRole === 'viewer'}
           >
             <RefreshCw className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole, pathname }: 
           {/* Theme Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="icon" className="h-9 w-9">
                 {theme === 'light' && <Sun className="h-4 w-4" />}
                 {theme === 'dark' && <Moon className="h-4 w-4" />}
                 {theme === 'system' && <Monitor className="h-4 w-4" />}
@@ -199,7 +199,7 @@ export function DashboardHeader({ onRefresh, lastRefresh, userRole, pathname }: 
         <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-background border-r">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-bold text-accent">
+            <h2 className="font-display text-lg leading-tight text-foreground">
               Espey Performance Hub
             </h2>
             <Button

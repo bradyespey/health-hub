@@ -101,6 +101,8 @@ export function LongTermGoalCard() {
     loadExistingContent();
   }, [user]);
 
+  if (!user) return null; // Hidden from public/logged-out view — real weight-plan details, not for public display
+
   return (
     <Card className="relative">
       <CardHeader>

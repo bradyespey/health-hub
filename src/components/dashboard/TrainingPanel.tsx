@@ -127,12 +127,12 @@ export function TrainingPanel() {
     >
       <Card className="h-full relative">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">
               <Dumbbell className="h-5 w-5 text-accent" />
               Training Load
             </CardTitle>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap sm:justify-end">
               <Badge variant="outline" className="text-xs">
                 {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Badge>

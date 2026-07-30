@@ -6,13 +6,13 @@ import { Progress } from '@/components/ui/progress';
 import { useWeightData } from '@/hooks/useData';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Demo mode: Generic milestones without personal details
+// Demo mode: generic milestones — weights and costs are placeholders, not Brady's real plan
 const demoMilestoneRewards = [
-  { weight: 205, date: 'Week 4', reward: 'Milestone Reward 1', cost: '$75' },
-  { weight: 200, date: 'Week 8', reward: 'Milestone Reward 2', cost: '$150' },
-  { weight: 195, date: 'Week 12', reward: 'Milestone Reward 3', cost: '$220' },
-  { weight: 190, date: 'Week 16', reward: 'Milestone Reward 4', cost: '$350' },
-  { weight: 185, date: 'Week 20', reward: 'Final Goal Reward', cost: '$530' },
+  { weight: 220, date: 'Week 4', reward: 'Milestone Reward 1', cost: '$50' },
+  { weight: 210, date: 'Week 8', reward: 'Milestone Reward 2', cost: '$100' },
+  { weight: 200, date: 'Week 12', reward: 'Milestone Reward 3', cost: '$150' },
+  { weight: 190, date: 'Week 16', reward: 'Milestone Reward 4', cost: '$250' },
+  { weight: 180, date: 'Week 20', reward: 'Final Goal Reward', cost: '$400' },
 ];
 
 // Personal milestones (only shown when authenticated)
@@ -32,9 +32,9 @@ export function MilestoneProgressPanel() {
   const milestoneRewards = user ? personalMilestoneRewards : demoMilestoneRewards;
   
   // Use mock weight for demo mode
-  const currentWeight = user 
+  const currentWeight = user
     ? (weightData?.[weightData.length - 1]?.weight || 212)
-    : 195; // Demo weight showing progress
+    : 205; // Demo weight (placeholder, not Brady's real weight) showing progress
 
   return (
     <motion.div
@@ -44,7 +44,7 @@ export function MilestoneProgressPanel() {
     >
       <Card className="relative flex flex-col h-full">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-accent" />
               Milestone Progress

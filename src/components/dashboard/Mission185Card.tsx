@@ -28,7 +28,9 @@ const personalMilestones = [
 export function Mission185Card() {
   const { user } = useAuth();
   const { data: weightData, isLoading } = useWeightData(120); // Get ~4 months of data
-  
+
+  if (!user) return null; // Hidden from public/logged-out view — real weight-plan details, not for public display
+
   // Use demo milestones if not authenticated
   const milestones = user ? personalMilestones : demoMilestones;
   
