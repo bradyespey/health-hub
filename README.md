@@ -49,13 +49,6 @@ VITE_FIREBASE_APP_ID=YOUR_APP_ID
 
 # Health App API Keys
 VITE_HABITIFY_API_KEY=YOUR_HABITIFY_KEY
-
-# Google Drive Backup (Cloud Functions)
-GOOGLE_PROJECT_ID=YOUR_PROJECT_ID
-GOOGLE_PRIVATE_KEY_ID=YOUR_PRIVATE_KEY_ID
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY\n-----END PRIVATE KEY-----\n" # Single line with \n escapes
-GOOGLE_CLIENT_EMAIL=health-hub-backup@YOUR_PROJECT.iam.gserviceaccount.com
-GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 ```
 
 ## Run Modes (Debug, Headless, Profiles)
@@ -69,8 +62,6 @@ GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 - 🔍 **Lint**: `npm run lint` — ESLint code checking
 - 👀 **Preview**: `npm run preview` — Preview production build
 - 🔥 **Deploy Functions**: `firebase deploy --only functions` — Deploy Cloud Functions
-- 📦 **Backup**: Manual and automated Google Drive backups via admin panel
-
 ### Data Pipeline Automation
 - ⏰ **Cloud Functions**: Cron every 2h fetches Habitify data
 - 📱 **Health Auto Export**: Automated Apple Health exports (weight, hydration, HRV, workouts, nutrition, readiness) via REST API to Firebase Function
@@ -141,7 +132,6 @@ HealthHub/
 - 🔄 **Data Sync**: Monitor Cloud Functions logs for API failures and retry logic
 - 📊 **Health Data**: Health Auto Export app required for Apple Health integration (see docs/Apple Health Setup Guide.md)
 - 🗂️ **Data Sources**: Apple Health is the primary source for nutrition, hydration, training, and weight data (Lose It! and Athlytic APIs unavailable)
-- 💾 **Backup/Restore**: Google Drive integration requires service account setup
 - 🔔 **Notifications**: Firebase Cloud Messaging needs proper permissions and tokens
 - 🎨 **Layout**: Fixed flow layout - customization done via code changes, not UI
 
