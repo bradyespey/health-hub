@@ -28,9 +28,12 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
-    // Per-user Apple Health data (appleHealth/{userId}/{dateStr}/{type}, .../latest/summary)
+    // Apple Health data (appleHealth/{userId}/{dateStr}/{type}, .../latest/summary).
+    // The app writes/reads this under a fixed literal key (e.g. 'brady'), shared
+    // across the household, not a per-signed-in-user Firebase uid — so this is
+    // allowlist-scoped like system/settings, not uid-owner-scoped.
     match /appleHealth/{userId}/{document=**} {
-      allow read, write: if isOwner(userId);
+      allow read, write: if isAuthorizedUser();
     }
 
     // Per-user text cards (textCards/{userId}/{page}/{cardId})
