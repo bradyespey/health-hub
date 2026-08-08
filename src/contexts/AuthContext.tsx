@@ -3,6 +3,12 @@ import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut as f
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '@/lib/firebaseConfig';
 
+// All allowed household members are also admins (no separate viewer-only tier today).
+const allowedEmails = String(import.meta.env.VITE_ALLOWED_EMAILS ?? '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
 export type UserRole = 'admin' | 'viewer';
 
 export interface User {
@@ -55,15 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleUserSignIn = async (firebaseUser: FirebaseUser) => {
     try {
       // Check if user email is in approved list
-      const approvedEmails = [
-        'baespey@gmail.com',
-        'bradyjennytx@gmail.com', 
-        'jennycespey@gmail.com'
-      ];
-
       const userEmail = firebaseUser.email || '';
-      
-      if (!approvedEmails.includes(userEmail)) {
+
+      if (!allowedEmails.includes(userEmail.toLowerCase())) {
         // User not approved, sign them out
         if (auth) {
           await firebaseSignOut(auth);
@@ -107,12 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // New approved user, create user document
         // Set role based on email - admins can edit, viewers can only view
-        const adminEmails = [
-          'baespey@gmail.com',
-          'jennycespey@gmail.com', 
-          'bradyjennytx@gmail.com'
-        ];
-        const role = adminEmails.includes(userEmail) ? 'admin' : 'viewer';
+        const role = allowedEmails.includes(userEmail.toLowerCase()) ? 'admin' : 'viewer';
         
         userData = {
           id: firebaseUser.uid,

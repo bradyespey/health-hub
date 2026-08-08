@@ -116,13 +116,23 @@ export const backupToGoogleDrive = functions.https.onRequest(async (req, res) =>
  */
 export const ingestAppleHealth = functions.https.onRequest({
   memory: '512MiB',
-  timeoutSeconds: 120
+  timeoutSeconds: 120,
+  secrets: ['HEALTH_INGEST_SECRET']
 }, async (req, res) => {
   return corsHandler(req, res, async () => {
     try {
       // Verify request method
       if (req.method !== 'POST') {
         res.status(405).send('Method Not Allowed');
+        return;
+      }
+
+      // Verify shared secret — this endpoint is hit by the Health Auto Export
+      // iOS app in the background, so it can't do an interactive Firebase sign-in.
+      // A static per-deployment secret is the fail-closed alternative.
+      const providedSecret = req.headers['x-ingest-secret'] || req.query.secret;
+      if (!process.env.HEALTH_INGEST_SECRET || providedSecret !== process.env.HEALTH_INGEST_SECRET) {
+        res.status(401).send('Unauthorized');
         return;
       }
 
