@@ -126,11 +126,22 @@ HealthHub/
 - **Popover Help**: Page info button in header navigation opens contextual help via popover
 - **Per-Page Tips**: Each page has specific usage tips and instructions
 
+## Health Auto Export Setup
+Apple Health data reaches HealthHub via the [Health Auto Export](https://www.healthexportapp.com) iOS app, configured as a REST API automation:
+- **Automation Type**: REST API
+- **URL**: the `ingestAppleHealth` Cloud Function URL (`firebase functions:list --project healthhub-d43d3`)
+- **Header**: `x-ingest-secret` → value from 1Password ("HealthHub Environment Variables" → `HEALTH_INGEST_SECRET`). Required as of 2026-08-08 — the endpoint returns 401 without it.
+- **Data Type**: Health Metrics, all metrics selected
+- **Export Format**: JSON, Export Version v2
+- **Sync Cadence**: hourly is plenty; the function batches and dedupes on write
+
+If `HEALTH_INGEST_SECRET` is ever rotated, update it in both Firebase Secret Manager (`firebase functions:secrets:set HEALTH_INGEST_SECRET`) and the Health Auto Export app's header value, or the automated sync will start failing with 401s.
+
 ## Troubleshooting
 - 🔐 **Auth Issues**: Verify Firebase authorized domains include both production URLs. App runs in demo mode if Firebase not configured
 - 📱 **PWA Install**: Check manifest.json and service worker registration
 - 🔄 **Data Sync**: Monitor Cloud Functions logs for API failures and retry logic
-- 📊 **Health Data**: Health Auto Export app required for Apple Health integration (see docs/Apple Health Setup Guide.md)
+- 📊 **Health Data**: Health Auto Export app required for Apple Health integration (see "Health Auto Export Setup" above)
 - 🗂️ **Data Sources**: Apple Health is the primary source for nutrition, hydration, training, and weight data (Lose It! and Athlytic APIs unavailable)
 - 🔔 **Notifications**: Firebase Cloud Messaging needs proper permissions and tokens
 - 🎨 **Layout**: Fixed flow layout - customization done via code changes, not UI
