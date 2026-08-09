@@ -46,10 +46,9 @@ VITE_FIREBASE_PROJECT_ID=healthhub-d43d3
 VITE_FIREBASE_STORAGE_BUCKET=healthhub-d43d3.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
 VITE_FIREBASE_APP_ID=YOUR_APP_ID
-
-# Health App API Keys
-VITE_HABITIFY_API_KEY=YOUR_HABITIFY_KEY
 ```
+
+Habitify calls go through a server-side proxy (`habitifyProxy` Firebase Function) — the real API key lives in Firebase Secret Manager (`HABITIFY_API_KEY`), not the client bundle. Nothing to set in `.env` for it.
 
 ## Run Modes (Debug, Headless, Profiles)
 - 🐛 **Debug Mode**: `npm run dev` with browser dev tools and Firebase emulator

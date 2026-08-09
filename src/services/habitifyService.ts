@@ -1,3 +1,5 @@
+import { auth } from '@/lib/firebaseConfig';
+
 export interface Habit {
   id: string;
   name: string;
@@ -72,28 +74,34 @@ interface HabitifyResponse<T> {
  * Returns mock data when API key is not configured (demo mode).
  */
 export class HabitifyService {
-  private static readonly BASE_URL = 'https://api.habitify.me';
-  private static readonly API_KEY = import.meta.env.VITE_HABITIFY_API_KEY || '';
+  // Real Habitify key lives server-side (Firebase Secret Manager); the client
+  // calls this proxy with its Firebase ID token instead of a raw API key.
+  private static readonly BASE_URL = 'https://us-central1-healthhub-d43d3.cloudfunctions.net/habitifyProxy';
+
+  private static isConfigured(): boolean {
+    return Boolean(auth.currentUser);
+  }
 
   /**
-   * Makes an authenticated request to the Habitify API.
+   * Makes an authenticated request to the Habitify API via the server-side proxy.
    * @param endpoint - API endpoint path
    * @param options - Fetch options (method, body, etc.)
    * @returns Parsed JSON response
-   * @throws Error if API key is missing or request fails
+   * @throws Error if not signed in or request fails
    */
   private static async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    if (!this.API_KEY) {
-      console.warn('Habitify API key not found, skipping API request');
-      throw new Error('Habitify API key not configured');
+    if (!auth.currentUser) {
+      console.warn('Not signed in, skipping Habitify request');
+      throw new Error('Not signed in');
     }
 
+    const idToken = await auth.currentUser.getIdToken();
     const url = `${this.BASE_URL}${endpoint}`;
     // Making API request to Habitify
 
     const response = await fetch(url, {
       headers: {
-        'Authorization': this.API_KEY,
+        'Authorization': `Bearer ${idToken}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
@@ -123,7 +131,7 @@ export class HabitifyService {
    */
   static async getHabits(): Promise<Habit[]> {
     // Return mock data if no API key is configured
-    if (!this.API_KEY) {
+    if (!this.isConfigured()) {
       // Using mock data - API key not configured
       return [
         {
@@ -647,8 +655,8 @@ export class HabitifyService {
 
   // Clear old test actions to get clean analytics
   static async clearTestActions(): Promise<string> {
-    if (!this.API_KEY) {
-      return '❌ No API key configured';
+    if (!this.isConfigured()) {
+      return '❌ Not signed in';
     }
 
     try {
@@ -701,8 +709,8 @@ export class HabitifyService {
   // Debug utility to test API connection and explore endpoints
   static async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
-      if (!this.API_KEY) {
-        return { success: false, message: 'API key not configured. Please set VITE_HABITIFY_API_KEY environment variable.' };
+      if (!this.isConfigured()) {
+        return { success: false, message: 'Not signed in.' };
       }
 
       // Test with a simple GET request to habits endpoint

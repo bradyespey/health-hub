@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import cors from 'cors';
 
 // Initialize Firebase Admin
@@ -8,6 +9,66 @@ admin.initializeApp();
 
 // Configure CORS
 const corsHandler = cors({ origin: true });
+
+/**
+ * HTTP Cloud Function that proxies Habitify API requests, holding the real
+ * API key server-side instead of shipping it in the client bundle.
+ * Client sends its Firebase ID token; caller must be in ALLOWED_EMAILS.
+ */
+export const habitifyProxy = functions.https.onRequest({
+  memory: '256MiB',
+  timeoutSeconds: 30,
+  secrets: ['HABITIFY_API_KEY'],
+}, async (req, res) => {
+  return corsHandler(req, res, async () => {
+    try {
+      const authHeader = req.headers.authorization || '';
+      const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (!idToken) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      let decoded;
+      try {
+        decoded = await getAuth().verifyIdToken(idToken);
+      } catch {
+        res.status(401).json({ error: 'Invalid token' });
+        return;
+      }
+
+      const allowedEmails = (process.env.ALLOWED_EMAILS || '')
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (!decoded.email || !allowedEmails.includes(decoded.email.toLowerCase())) {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      const apiKey = process.env.HABITIFY_API_KEY;
+      if (!apiKey) {
+        res.status(500).json({ error: 'Habitify not configured' });
+        return;
+      }
+
+      const response = await fetch(`https://api.habitify.me${req.url}`, {
+        method: req.method,
+        headers: {
+          Authorization: apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+      });
+
+      const data = await response.text();
+      res.status(response.status).set('Content-Type', 'application/json').send(data);
+    } catch (error) {
+      console.error('habitifyProxy error:', error);
+      res.status(500).json({ error: 'Proxy request failed' });
+    }
+  });
+});
 
 /**
  * HTTP Cloud Function to ingest Apple Health data from Health Auto Export app
