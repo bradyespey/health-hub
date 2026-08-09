@@ -108,7 +108,7 @@ export function useHabits() {
       refreshInterval: 2 * 60 * 1000, // 2 minutes for better sync
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 0, // Force fresh data every time
+      dedupingInterval: 30 * 1000, // avoid duplicate calls when focus/reconnect/interval overlap
       onError: (error) => {
         // Silently handle API key errors
         if (error.message.includes('API key not configured')) {
