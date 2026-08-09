@@ -127,7 +127,7 @@ HealthHub/
 - **Per-Page Tips**: Each page has specific usage tips and instructions
 
 ## Health Auto Export Setup
-Apple Health data reaches HealthHub via the [Health Auto Export](https://www.healthexportapp.com) iOS app, configured as a REST API automation:
+Apple Health data reaches HealthHub via the [Health Auto Export](https://www.healthexportapp.com) iOS app, configured as a REST API automation ([official REST API automation docs](https://help.healthyapps.dev/en/health-auto-export/automations/rest-api/)):
 - **Automation Type**: REST API
 - **URL**: the `ingestAppleHealth` Cloud Function URL (`firebase functions:list --project healthhub-d43d3`)
 - **Header**: `x-ingest-secret` → value from 1Password ("HealthHub Environment Variables" → `HEALTH_INGEST_SECRET`). Required as of 2026-08-08 — the endpoint returns 401 without it.
